@@ -119,7 +119,8 @@ cabi = [
     }
 ]
 
-configpath = 'IOTA/various/evm/treasury_transparency/startup.cfg'
+# configpath = 'IOTA/various/evm/treasury_transparency/startup.cfg'
+configpath = 'startup.cfg'
 config = configparser.RawConfigParser()
 config.read(configpath)
 
