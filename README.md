@@ -11,8 +11,8 @@ You need to set your bot auth token in your environment:
 export DISCORD_TOKEN = <insert your token here>
 ```
 
-Set the channel ID in the startup.cfg that you want the bot to be run in.
-Set admin IDs in startup.cfg
+Invite your bot to your server and grant it access to a target channel.
+Set that channel's ID and admin user IDs in the startup.cfg.
 You can add tokens in startup.cfg if you want to - but you can also add and delete those through bot commands in discord.
 
 Then just run the bot:
