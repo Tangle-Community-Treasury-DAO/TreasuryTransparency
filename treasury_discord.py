@@ -7,7 +7,6 @@ import os
 import configparser
 
 #region statics
-# w3 = Web3(Web3.HTTPProvider('https://json-rpc.evm.shimmer.network'))
 w3 = Web3(Web3.AsyncHTTPProvider('https://json-rpc.evm.shimmer.network'), modules={'eth': (AsyncEth,)}, middlewares=[])
 cabi = [
     {
@@ -131,13 +130,13 @@ LENDTOKENS = eval(config['watchlist']['lendtokens'])
 LIMITTOKENS = eval(config['watchlist']['limittokens'])
 
 DISCORDTOKEN = os.getenv('DISCORD_TOKEN')
-DISCORDCHANNEL = eval(config['discord']['discordchannel'])
+DISCORDCHANNELS = eval(config['discord']['discordchannels'])
 ADMINS = eval(config['discord']['admins'])
 
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 #endregion
 
 async def output_status(channel):
@@ -227,19 +226,25 @@ async def update_status():
 
 async def update_thread():
     await asyncio.sleep(3)
-    channel = bot.get_channel(DISCORDCHANNEL)
+    channels = []
+    for chan in DISCORDCHANNELS:
+        channels.append(bot.get_channel(chan))
     while True: 
         if await update_status():
-            await output_status(channel)
+            for c in channels:
+                try:
+                    await output_status(c)
+                except:
+                    pass
         await asyncio.sleep(10)
 
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
 
-@bot.command()
+@bot.command(brief='add ERC-20 token to watchlist `!addtoken <token address> <decimals>`')
 async def addtoken(ctx, *args):
-    if ctx.author.id in ADMINS and ctx.channel.id == DISCORDCHANNEL:
+    if ctx.author.id in ADMINS and ctx.channel.id in DISCORDCHANNELS:
         try:
             if len(args) >= 2:
                 TOKENS[args[0]]={'amount':0}
@@ -254,9 +259,12 @@ async def addtoken(ctx, *args):
 
 @bot.command()
 async def deltoken(ctx, arg):
-    if ctx.author.id in ADMINS and ctx.channel.id == DISCORDCHANNEL:
+    if ctx.author.id in ADMINS and ctx.channel.id in DISCORDCHANNELS:
         try:
-            del TOKENS[arg]
+            for key, value in TOKENS.items():
+                if key == arg or value['sym'].lower()==arg.lower():
+                    del TOKENS[key]
+
             config.set('watchlist', 'tokens', TOKENS)
             with open(configpath, 'w') as configfile:
                 config.write(configfile)
@@ -266,7 +274,7 @@ async def deltoken(ctx, arg):
 
 @bot.command()
 async def addlp(ctx, *args):
-    if ctx.author.id in ADMINS and ctx.channel.id == DISCORDCHANNEL:
+    if ctx.author.id in ADMINS and ctx.channel.id in DISCORDCHANNELS:
         try:
             if len(args) > 1:
                 LPS[args[0]]={'name': ' '.join(args[1:]), 'amount':0, 'tok0amount': 0,'tok1amount': 0}
@@ -281,9 +289,12 @@ async def addlp(ctx, *args):
 
 @bot.command()
 async def dellp(ctx, arg):
-    if ctx.author.id in ADMINS and ctx.channel.id == DISCORDCHANNEL:
+    if ctx.author.id in ADMINS and ctx.channel.id in DISCORDCHANNELS:
         try:
-            del LPS[arg]
+            for key, value in TOKENS.items():
+                if key == arg or value['name'].lower()==arg.lower():
+                    del LPS[key]
+
             config.set('watchlist', 'lps', LPS)
             with open(configpath, 'w') as configfile:
                 config.write(configfile)
@@ -293,7 +304,7 @@ async def dellp(ctx, arg):
 
 @bot.command()
 async def addwallet(ctx, arg):
-    if ctx.author.id in ADMINS and ctx.channel.id == DISCORDCHANNEL:
+    if ctx.author.id in ADMINS and ctx.channel.id in DISCORDCHANNELS:
         try:
             TREASURYADDRESSES.append(arg)
             config.set('watchlist', 'treasuryaddresses', TREASURYADDRESSES)
@@ -306,7 +317,7 @@ async def addwallet(ctx, arg):
 
 @bot.command()
 async def delwallet(ctx, arg):
-    if ctx.author.id in ADMINS and ctx.channel.id == DISCORDCHANNEL:
+    if ctx.author.id in ADMINS and ctx.channel.id in DISCORDCHANNELS:
         try:
             TREASURYADDRESSES.remove(arg)
 
@@ -319,7 +330,7 @@ async def delwallet(ctx, arg):
 
 @bot.command()
 async def update(ctx):
-    if ctx.author.id in ADMINS and ctx.channel.id == DISCORDCHANNEL:
+    if ctx.author.id in ADMINS and ctx.channel.id in DISCORDCHANNELS:
         try:
             await update_status()
             await output_status(ctx.message.channel)
@@ -329,12 +340,12 @@ async def update(ctx):
 
 @bot.command()
 async def addlending(ctx, *args):
-    if ctx.author.id in ADMINS and ctx.channel.id == DISCORDCHANNEL:
+    if ctx.author.id in ADMINS and ctx.channel.id in DISCORDCHANNELS:
         await ctx.message.add_reaction('⛔')
 
 @bot.command()
 async def addlimit(ctx, *args):
-    if ctx.author.id in ADMINS and ctx.channel.id == DISCORDCHANNEL:
+    if ctx.author.id in ADMINS and ctx.channel.id in DISCORDCHANNELS:
         await ctx.message.add_reaction('⛔')   
 
 async def main():
