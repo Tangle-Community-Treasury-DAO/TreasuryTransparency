@@ -12,7 +12,9 @@ export DISCORD_TOKEN = <insert your token here>
 ```
 
 Invite your bot to your server and grant it access to a target channel.
+
 Set that channel's ID and admin user IDs in the startup.cfg.
+
 You can add tokens in startup.cfg if you want to - but you can also add and delete those through bot commands in discord.
 
 Then just run the bot:
@@ -20,11 +22,13 @@ Then just run the bot:
 python3 treasury_discord.py
 ````
 All commands must be run by admins in the specified channel.
+
 To add a regular ERC-20 token:
 ```
 !addtoken <token address> <decimals>
 ```
 `decimals` is the amount of decimals shown in the bot's output in discord.
+
 For example to add SMR displaying 2 decimals:
 ```
 !addtoken 0x1074010000000000000000000000000000000000 2
