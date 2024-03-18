@@ -403,7 +403,7 @@ cabi = [
 
 # load statics from config
 path = ''
-# path = 'IOTA/various/evm/treasury_transparency/'
+path = 'IOTA/various/evm/treasurytransparency/'
 configpath = path+'startup.cfg'
 
 config = configparser.RawConfigParser()
