@@ -1760,6 +1760,24 @@ async def events(ctx, *args):
         except Exception as e:
             await ctx.message.add_reaction('⛔')
 
+@bot.command()
+async def richlist(ctx, *args):
+    if ctx.channel.id in PCHANNELS or ctx.author.id in ADMINS:
+        try:
+            async with session.get('https://chronicle.shimmer.network/api/explorer/v2/ledger/richest-addresses', timeout=10) as resp:
+                smrrichlist = (await resp.json())['top']
+            async with session.get('https://chronicle.stardust-mainnet.iotaledger.net/api/explorer/v2/ledger/richest-addresses', timeout=10) as resp:
+                iotarichlist = (await resp.json())['top']
+            with open("iota_richlist.json", "w") as file:
+                json.dump(iotarichlist, file, indent=2)
+            with open("smr_richlist.json", "w") as file:
+                json.dump(smrrichlist, file, indent=2)
+            await ctx.send(file=discord.File("iota_richlist.json"))
+            await ctx.send(file=discord.File("smr_richlist.json"))
+            await ctx.message.add_reaction('✅')
+        except Exception as e:
+            await ctx.message.add_reaction('⛔')
+
 # endregion 
             
 async def main():
