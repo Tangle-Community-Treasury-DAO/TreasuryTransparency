@@ -1603,7 +1603,7 @@ async def votes(ctx, *args):
                         with open(k+'.json', encoding='utf-8') as inputfile:
                             df = pd.read_json(inputfile)
 
-                        df.to_csv(k+'.csv', encoding='utf-8', index=False)
+                        df.to_csv(k+'.csv', encoding='utf-8', header=False, index=False)
 
                         #await ctx.send(EVENTS[k]['name'], file=discord.File(k+".json"))
                         await ctx.send(EVENTS[k]['name'], file=discord.File(k+".csv"))
