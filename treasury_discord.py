@@ -608,7 +608,7 @@ async def update_votings():
             pullSmrOuts = False
             pullSmrMilestone = 9999999999999999999
             smrMilestone = client_smr.get_info().nodeInfo.status.confirmedMilestone.index
-            for id in [s for s in smreventids if s not in EVENTS]:
+            for id in smreventids:
                 #pull basic event information from nodes participation plugin
                 async with session.get(smr_node+part_endpoint+'/'+id, timeout=5) as resp:
                     EVENTS[id] = await resp.json()
@@ -635,7 +635,8 @@ async def update_votings():
             pullIotaOuts = False
             pullIotaMilestone = 9999999999999999999
             iotaMilestone = client_iota.get_info().nodeInfo.status.confirmedMilestone.index
-            for id in [s for s in iotaeventids if s not in EVENTS]:
+            #for id in [s for s in iotaeventids if s not in EVENTS]:
+            for id in iotaeventids:
                 async with session.get(iota_node+part_endpoint+'/'+id, timeout=5) as resp:
                     EVENTS[id] = await resp.json()
                 async with session.get(iota_node+part_endpoint+'/'+id+'/status', timeout=5) as resp:
@@ -713,6 +714,7 @@ async def update_votings():
         except Exception as e:
             pass
         await asyncio.sleep(VFREQUENCY)
+        
 
 # update and store price metrics in static variables from coingecko 
 async def update_price():
