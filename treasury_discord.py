@@ -12,6 +12,7 @@ from web3.eth import AsyncEth
 import discord
 from discord.ext import commands
 
+import pandas as pd
 # endregion
 
 # region statics
@@ -1593,10 +1594,19 @@ async def votes(ctx, *args):
                 filterevent = ' '.join(args).lower()
                 for k,v in {**VOTINGS['SMR'],**VOTINGS['IOTA']}.items():
                     if filterevent in k.lower() or filterevent in EVENTS[k]['name'].lower():
+                        # for vote in v:
+                        #     answs = vote.pop()
+                        #     for a in answs:
+                        #         vote.append(a)
                         with open(k+".json", "w") as file:
                             json.dump(v, file, indent=2)
-                        
-                        await ctx.send(EVENTS[k]['name'], file=discord.File(k+".json"))
+                        with open(k+'.json', encoding='utf-8') as inputfile:
+                            df = pd.read_json(inputfile)
+
+                        df.to_csv(k+'.csv', encoding='utf-8', index=False)
+
+                        #await ctx.send(EVENTS[k]['name'], file=discord.File(k+".json"))
+                        await ctx.send(EVENTS[k]['name'], file=discord.File(k+".csv"))
                 await ctx.message.add_reaction('✅')
                 
         except Exception as e:
