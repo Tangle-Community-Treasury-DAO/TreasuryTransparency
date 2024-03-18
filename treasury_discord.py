@@ -22,6 +22,45 @@ cabi = [
     {
         "inputs": [
             {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+            },
+            {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+            }
+        ],
+        "name": "userNFTs",
+        "outputs": [
+            {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+        
+        ],
+        "name": "liquidity",
+        "outputs": [
+        {
+            "internalType": "uint128",
+            "name": "",
+            "type": "uint128"
+        }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "address",
                 "name": "",
                 "type": "address"
@@ -33,6 +72,44 @@ cabi = [
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "userNFTs",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "getUserNFTs",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
             }
         ],
         "stateMutability": "view",
@@ -419,7 +496,8 @@ TANGLESWAP = eval(config["watchlist"]["tangleswap"]) # tangleswap liquidity pool
 TANGLEHELPER = eval(config["watchlist"]["tanglehelper"]) # tangleswap helper SC to determine positions
 FARMS = eval(config["watchlist"]["farms"]) # shimmersea farms
 IOTABEE = eval(config["watchlist"]["iotabee"]) # iotabee positions
-IOTABEEPOSADDR = eval(config["watchlist"]["iotabeeposaddr"]) # iotabee staking SC
+IOTABEEPOSADDR = eval(config["watchlist"]["iotabeeposaddr"]) # iotabee position NFT
+IOTABEEFARM = eval(config["watchlist"]["iotabeefarm"]) #iota bee 
 
 DISCORDTOKEN = os.getenv('DISCORD_TOKEN') # discord bot token, export it first
 ADMINCHANNELS = eval(config["discord"]["adminchannels"]) # discord channel id for administrative actions
@@ -1099,37 +1177,55 @@ async def update_tangleswap():
 async def update_univ3():
     needsUpdate = False
 
+    #region get deposited NFTs from blockchain, outdated
     # blockscout grrrr
     # since the staking SC isn't verified and we can't read it yet, 
     # we need to find all deposits of treasury position NFTs into the staking SC.
-    try:
-        foundAll = False
-        transfers= []
-        farm = '0xa2c8B10F8307246B0252090a8073b6a5c04c7Ff0'
+    # try:
+    #     foundAll = False
+    #     transfers= []
+    #     farm = '0xa2c8B10F8307246B0252090a8073b6a5c04c7Ff0'
 
-        # get all transactions to the staking SC / farm through blockscout API
-        async with session.get('https://explorer.evm.shimmer.network/api/v2/addresses/'+farm+'/token-transfers?type=validated&filter=to', timeout=10) as resp0:
-            transfers.append(await resp0.json())
-        blocknumber = transfers[-1]['next_page_params']['block_number']
-        index =  transfers[-1]['next_page_params']['index']
+    #     # get all transactions to the staking SC / farm through blockscout API
+    #     async with session.get('https://explorer.evm.shimmer.network/api/v2/addresses/'+farm+'/token-transfers?type=validated&filter=to', timeout=10) as resp0:
+    #         transfers.append(await resp0.json())
+    #     blocknumber = transfers[-1]['next_page_params']['block_number']
+    #     index =  transfers[-1]['next_page_params']['index']
 
-        # cycle through all pages until all transactions to the farm are found
-        while not foundAll:
-            async with session.get('https://explorer.evm.shimmer.network/api/v2/addresses/0xa2c8B10F8307246B0252090a8073b6a5c04c7Ff0/token-transfers?type=validated&filter=to&block_number='+str(blocknumber)+'&index='+str(index), timeout=10) as resp0:
-                transfers.append(await resp0.json())
-                if transfers[-1]['next_page_params']:
-                    blocknumber = transfers[-1]['next_page_params']['block_number']
-                    index =  transfers[-1]['next_page_params']['index']
-                else:
-                    foundAll=True
+    #     # cycle through all pages until all transactions to the farm are found
+    #     while not foundAll:
+    #         async with session.get('https://explorer.evm.shimmer.network/api/v2/addresses/0xa2c8B10F8307246B0252090a8073b6a5c04c7Ff0/token-transfers?type=validated&filter=to&block_number='+str(blocknumber)+'&index='+str(index), timeout=10) as resp0:
+    #             transfers.append(await resp0.json())
+    #             if transfers[-1]['next_page_params']:
+    #                 blocknumber = transfers[-1]['next_page_params']['block_number']
+    #                 index =  transfers[-1]['next_page_params']['index']
+    #             else:
+    #                 foundAll=True
         
-        # note all NFT IDs that got deposited into the farm / staking pool by any treasury wallet
-        fts = [item['total']['token_id'] for t in transfers for item in t['items'] if item['from']['hash'] in TREASURYADDRESSES]
-    except Exception as e:
-        pass
+    #     # note all NFT IDs that got deposited into the farm / staking pool by any treasury wallet
+    #     fts = [item['total']['token_id'] for t in transfers for item in t['items'] if item['from']['hash'] in TREASURYADDRESSES]
+    # except Exception as e:
+    #     pass
 
+    #endregion
+
+    # https://github.com/iotadex/ibstake/blob/fd732e1a9dd4b4cc5545d3d095ac2eea75a1897d/artifacts/contracts/stakeNFT721.sol/StakeNFT721.json#L391
+    
+    #get deposited positions in farm
+    fts = []
+    fc = w3.eth.contract(abi=cabi, address=IOTABEEFARM)
+    for address in TREASURYADDRESSES:
+        i = 0
+        foundAll = False
+        while not foundAll:
+            try:
+                NFTid = await fc.functions.userNFTs(address, ).call()
+                fts.append(NFTid)
+                i+=1
+            except:
+                foundAll = True
     #####
-    for address in TREASURYADDRESSES+[farm]:
+    for address in TREASURYADDRESSES+[IOTABEEFARM]:
         try:
             # get all currently owned position NFTs from iotabee api 
             # as well as all NFTs owned by the staking pool / farm
@@ -1137,7 +1233,7 @@ async def update_univ3():
                 positions = await resp.json()
 
             # we only want those position NFTs in the farm that belong to treasury
-            if address==farm:
+            if address==IOTABEEFARM:
                 positions = [p for p in positions if p['tokenid'] in fts]
 
             # for all position NFTs, pull liquidity tokens from v3 contract
@@ -1645,10 +1741,11 @@ async def events(ctx, *args):
                         current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)'
                         mscnt = e['milestoneIndexEnd']-e['milestoneIndexStart']
                         currmscnt = max(min(e['milestone'], e['milestoneIndexEnd'])-e['milestoneIndexStart'], 0.000001)
-                        accumulated = f'Total ({0.1*answer["accumulated"]/(circ*currmscnt):.2f}/{0.1*answer["accumulated"]/(circ*mscnt):.2f})%'
+                        accumulated = f'Total {0.1*answer["accumulated"]/(circ*currmscnt):.2f}% / {0.1*answer["accumulated"]/(circ*mscnt):.2f}%'
                         #total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
                         outstr = f'''{current}
                         {accumulated}'''
+                        
                         embed.add_field(name=answer['text'], value=outstr)
                         if len(embed.fields) > 20:
                             await ctx.send(embed=embed)
