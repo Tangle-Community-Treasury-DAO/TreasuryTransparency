@@ -1644,8 +1644,8 @@ async def events(ctx, *args):
                             circ = smr['circulating']
                         current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)'
                         mscnt = e['milestoneIndexEnd']-e['milestoneIndexStart']
-                        currmscnt = max(e['milestone']-e['milestoneIndexStart'], 0.000001)
-                        accumulated = f'Accumulated ({0.1*answer["accumulated"]/(circ*currmscnt):.2f}/{0.1*answer["accumulated"]/(circ*mscnt):.2f})%'
+                        currmscnt = max(min(e['milestone'], e['milestoneIndexEnd'])-e['milestoneIndexStart'], 0.000001)
+                        accumulated = f'Total ({0.1*answer["accumulated"]/(circ*currmscnt):.2f}/{0.1*answer["accumulated"]/(circ*mscnt):.2f})%'
                         #total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
                         outstr = f'''{current}
                         {accumulated}'''
