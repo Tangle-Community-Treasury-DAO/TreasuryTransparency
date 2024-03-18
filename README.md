@@ -2,8 +2,11 @@
 
 Requirements:
 Python 3.10+
+
 web3
+
 discord.py
+
 iota-sdk
 ```
 pip3 install web3
@@ -19,6 +22,12 @@ export DISCORD_TOKEN = <insert your token here>
 Invite your bot to your server and grant it access to all channels you want it to interact.
 
 Set an admin channel's ID and superuser user IDs in the startup.cfg.
+
+Add or remove an admin as superuser with:
+```
+!addadmin <user-id>
+!deladmin <user-id>
+```
 
 You can add tokens / pools / farms in startup.cfg if you want to - but it is more convenient to add and delete those through bot commands in discord.
 
@@ -37,12 +46,6 @@ To add or remove a channel for balance-outputs:
 ```
 !addtchannel <channel id>
 !addtchannel <channel id>
-```
-
-Add or remove an admin as superuser with:
-```
-!addadmin <user-id>
-!deladmin <user-id>
 ```
 
 To add or remove a wallet addresses to the watchlist:
@@ -113,7 +116,8 @@ Regular users can utilize the following commands:
 !events 0x69
 !events treasury
 ```
-`!votes <filter arguments> to get currently voting wallets. filter arguments can be wallet addresses or event filters. If no address filter is given, it will send a file with all wallets on the filtered events.
+
+`!votes <filter arguments>` to get currently voting wallets. filter arguments can be wallet addresses or event filters. If no address filter is given, it will send a file with all wallets on the filtered events.
 Here are a few examples:
 ```
 !votes
@@ -122,3 +126,4 @@ Here are a few examples:
 !votes treasury
 !votes iota12312 iota31232
 ```
+
