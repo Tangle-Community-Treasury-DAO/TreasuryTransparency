@@ -9,10 +9,14 @@ web3
 discord.py
 
 iota-sdk
+
+pandas
+
 ```
 pip3 install web3
 pip3 install discord.py
 pip3 install iota-sdk
+pip3 install pandas
 ```
 
 You need to set your bot auth token in your environment:
