@@ -529,6 +529,7 @@ async def update_votings():
 
             pullSmrOuts = False
             pullSmrMilestone = 9999999999999999999
+            smrMilestone = client_smr.get_info().nodeInfo.status.confirmedMilestone.index
             for id in [s for s in smreventids if s not in EVENTS]:
                 #pull basic event information from nodes participation plugin
                 async with session.get(smr_node+part_endpoint+'/'+id, timeout=5) as resp:
@@ -537,6 +538,7 @@ async def update_votings():
                 async with session.get(smr_node+part_endpoint+'/'+id+'/status', timeout=5) as resp:
                     status = await resp.json()
                     EVENTS[id]['status'] = status['status']
+                    EVENTS[id]['milestone'] = smrMilestone
                     #if currently an event active, pull all outputs after event starting date later on
                     if status['status']=='commencing' or status['status']=='holding':
                         pullSmrOuts = True
@@ -554,12 +556,14 @@ async def update_votings():
             # repeat the same with IOTA 
             pullIotaOuts = False
             pullIotaMilestone = 9999999999999999999
+            iotaMilestone = client_iota.get_info().nodeInfo.status.confirmedMilestone.index
             for id in [s for s in iotaeventids if s not in EVENTS]:
                 async with session.get(iota_node+part_endpoint+'/'+id, timeout=5) as resp:
                     EVENTS[id] = await resp.json()
                 async with session.get(iota_node+part_endpoint+'/'+id+'/status', timeout=5) as resp:
                     status = await resp.json()
                     EVENTS[id]['status'] = status['status']
+                    EVENTS[id]['milestone'] = iotaMilestone
                     if status['status']=='commencing' or status['status']=='holding':
                         pullIotaOuts = True
                         pullIotaMilestone = min(pullIotaMilestone, EVENTS[id]['milestoneIndexCommence'])
@@ -1621,7 +1625,6 @@ async def events(ctx, *args):
             # filter by specified name/id fragment
             # if none specified only take currently active events
             events = [v for e,v in EVENTS.items() if (filterevents in e.lower() or filterevents in v['name'].lower()) and (v['status']=='commencing' or v['status']=='holding' or len(args)>0)]
-            
             # print filtered events
             for e in events:
                 embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
@@ -1639,7 +1642,20 @@ async def events(ctx, *args):
                         else:
                             tok = 'SMR'
                             circ = smr['circulating']
-                        embed.add_field(name=answer['text'], value=f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)')
+                        current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)'
+                        mscnt = e['milestoneIndexEnd']-e['milestoneIndexStart']
+                        currmscnt = max(e['milestone']-e['milestoneIndexStart'], 0.000001)
+                        accumulated = f'Accumulated ({0.1*answer["accumulated"]/(circ*currmscnt):.2f}/{0.1*answer["accumulated"]/(circ*mscnt):.2f})%'
+                        #total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
+                        outstr = f'''{current}
+                        {accumulated}'''
+                        embed.add_field(name=answer['text'], value=outstr)
+                        if len(embed.fields) > 20:
+                            await ctx.send(embed=embed)
+                            embed = embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
+                            embed.set_author(name="Tangle Treasury", url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
+                            if j < len(answers)-1:
+                                embed.add_field(name=question, value='', inline=False)
                 await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
         except Exception as e:
