@@ -1,6 +1,7 @@
 # Discord bot for tangle treasury transparency
 
 Requirements:
+
 Python 3.10+
 
 web3
