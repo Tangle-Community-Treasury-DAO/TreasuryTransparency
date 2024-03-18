@@ -132,3 +132,9 @@ Here are a few examples:
 !votes iota12312 iota31232
 ```
 
+Get a richlist with
+```
+!richlist
+```
+
+
