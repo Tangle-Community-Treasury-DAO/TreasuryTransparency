@@ -592,7 +592,7 @@ def parse_vote(hex_str):
 def progress_bar(percent):
     bar_length = 20
     num_blocks = int(bar_length * percent / 100)
-    bar = '[' + '█' * num_blocks + '░' * (bar_length - num_blocks) + ']' + f' {percent:.2f}%'
+    bar = '|' + '█' * num_blocks + '░' * (bar_length - num_blocks) + '|' + f' {percent:.2f}%'
     return bar
 
 def get_percentage(start, end, t):
@@ -631,6 +631,8 @@ async def update_votings():
                     if status['status']=='commencing' or status['status']=='holding':
                         pullSmrOuts = True
                         pullSmrMilestone = min(pullSmrMilestone, EVENTS[id]['milestoneIndexCommence'])
+                        milestone = client_smr.get_milestone_by_index(smrMilestone)
+                        EVENTS[id]['lastUpdated'] = milestone.timestamp
                     #insert current eevnt sandings into EVENTS object
                     for i in range(len(status['questions'])):
                         for j in range(len(status['questions'][i]['answers'])):
@@ -656,6 +658,8 @@ async def update_votings():
                     if status['status']=='commencing' or status['status']=='holding':
                         pullIotaOuts = True
                         pullIotaMilestone = min(pullIotaMilestone, EVENTS[id]['milestoneIndexCommence'])
+                        milestone = client_iota.get_milestone_by_index(iotaMilestone)
+                        EVENTS[id]['lastUpdated'] = milestone.timestamp
                     for i in range(len(status['questions'])):
                         for j in range(len(status['questions'][i]['answers'])):
                             if j < len(EVENTS[id]['payload']['questions'][i]['answers']):
@@ -1664,7 +1668,7 @@ async def convert(ctx, arg):
             await ctx.message.add_reaction('⛔')
 
 # displays votes, filtered by address and/or event id/name
-@bot.command(aliases=["vote"])
+@bot.command(aliases=["vote", "v", "V"])
 async def votes(ctx, *args):
     if ctx.channel.id in PCHANNELS or ctx.author.id in ADMINS:
         try:
@@ -1728,7 +1732,7 @@ async def votes(ctx, *args):
             await ctx.message.add_reaction('⛔')
 
 # displays events, filtered by name and/or id
-@bot.command(aliases=["event"])
+@bot.command(aliases=["event", "e", "E"])
 async def events(ctx, *args):
     if ctx.channel.id in PCHANNELS or ctx.author.id in ADMINS:
         try:
@@ -1744,7 +1748,7 @@ async def events(ctx, *args):
                 else:
                     tok = 'SMR'
                     circ = smr['circulating']
-                embed = discord.Embed(title=f'{e["name"]}' , color=0xFF5733)
+                embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
                 embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
                 embed.add_field(name = progress_bar(get_percentage( e['milestoneIndexStart'], e['milestoneIndexEnd'], e['milestone'])), value='')
 
@@ -1777,6 +1781,7 @@ async def events(ctx, *args):
                             embed.set_author(name="Tangle Treasury", url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
                             if j < len(answers)-1:
                                 embed.add_field(name=question, value='', inline=False)
+                embed.set_footer(text=f'last Update {time.time()-e['lastUpdated']:.0f}s ago')
                 await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
         except Exception as e:
