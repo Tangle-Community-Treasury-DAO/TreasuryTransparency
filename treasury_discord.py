@@ -1754,7 +1754,7 @@ async def events(ctx, *args):
                             tok = 'SMR'
                             circ = smr['circulating']
                         current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)'
-                        projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-max(e["milestone"], e["milestoneIndexStart"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
+                        projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
                         # total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
                         outstr = f'''{current}
                         {projection}'''
