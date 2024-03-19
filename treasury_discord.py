@@ -732,7 +732,6 @@ async def update_votings():
             pass
         await asyncio.sleep(VFREQUENCY)
         
-
 # update and store price metrics in static variables from coingecko 
 async def update_price():
     iota_url = 'https://api.coingecko.com/api/v3/coins/iota?localization=false&tickers=false&market_data=true&community_data=true&developer_data=false'
@@ -1781,7 +1780,7 @@ async def events(ctx, *args):
                             embed.set_author(name="Tangle Treasury", url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
                             if j < len(answers)-1:
                                 embed.add_field(name=question, value='', inline=False)
-                embed.set_footer(text=f'last Update {time.time()-e['lastUpdated']:.0f}s ago')
+                embed.set_footer(text=f'last Update {time.time()-e["lastUpdated"]:.0f}s ago')
                 await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
         except Exception as e:
