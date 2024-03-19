@@ -1738,21 +1738,32 @@ async def events(ctx, *args):
             events = [v for e,v in EVENTS.items() if (filterevents in e.lower() or filterevents in v['name'].lower()) and (v['status']=='commencing' or v['status']=='holding' or len(args)>0)]
             # print filtered events
             for e in events:
-                embed = discord.Embed(title=f'{e["name"]}', description=progress_bar(get_percentage( e['milestoneIndexStart'], e['milestoneIndexEnd'], e['milestone'])) , color=0xFF5733)
+                if 'igp' in e['name'].lower():
+                    circ = iota['circulating']
+                    tok = 'IOTA'
+                else:
+                    tok = 'SMR'
+                    circ = smr['circulating']
+                embed = discord.Embed(title=f'{e["name"]}' , color=0xFF5733)
                 embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
+                embed.add_field(name = progress_bar(get_percentage( e['milestoneIndexStart'], e['milestoneIndexEnd'], e['milestone'])), value='')
+
                 questions = e['payload']['questions']
                 for i in range(len(questions)):
                     question = questions[i]['text']
-                    embed.add_field(name=question, value='', inline=False)
+                    goal = 0.05 * circ * (e['milestoneIndexEnd'] - e['milestoneIndexStart'])
+                    timeleft = max(0,(min(e['milestoneIndexEnd']-e['milestone'],e['milestoneIndexEnd'] - e['milestoneIndexStart'])))
                     answers = questions[i]['answers']
+
+                    accumulated = 0.001* sum([a['accumulated'] for a in answers])
+                    current = 0.001* sum([a['current'] for a in answers])
+                    missing = max((goal - accumulated) / max(timeleft,0.0000000000000001) - current,0)
+                    if missing > circ:
+                        missing = -1
+                    embed.add_field(name=question, value=f'{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
+                    
                     for j in range(len(answers)):
                         answer = answers[j]
-                        if 'igp' in e['name'].lower():
-                            circ = iota['circulating']
-                            tok = 'IOTA'
-                        else:
-                            tok = 'SMR'
-                            circ = smr['circulating']
                         current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)'
                         projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
                         # total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
