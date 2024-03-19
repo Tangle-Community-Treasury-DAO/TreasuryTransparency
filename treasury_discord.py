@@ -588,6 +588,16 @@ def parse_vote(hex_str):
 
     return participations
 
+# events progress bar
+def progress_bar(percent):
+    bar_length = 20
+    num_blocks = int(bar_length * percent / 100)
+    bar = '[' + '█' * num_blocks + '░' * (bar_length - num_blocks) + ']' + f' {percent:.2f}%'
+    return bar
+
+def get_percentage(start, end, t):
+    return 100*min((max(t-start, 0)) / (end-start),1)
+
 # thread to update current event standings frequently
 async def update_votings():
     smr_node = "https://api.shimmer.network"
@@ -1728,8 +1738,8 @@ async def events(ctx, *args):
             events = [v for e,v in EVENTS.items() if (filterevents in e.lower() or filterevents in v['name'].lower()) and (v['status']=='commencing' or v['status']=='holding' or len(args)>0)]
             # print filtered events
             for e in events:
-                embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
-                embed.set_author(name="Tangle Treasury", url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
+                embed = discord.Embed(title=f'{e["name"]}', description=progress_bar(get_percentage( e['milestoneIndexStart'], e['milestoneIndexEnd'], e['milestone'])) , color=0xFF5733)
+                embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
                 questions = e['payload']['questions']
                 for i in range(len(questions)):
                     question = questions[i]['text']
@@ -1744,12 +1754,10 @@ async def events(ctx, *args):
                             tok = 'SMR'
                             circ = smr['circulating']
                         current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)'
-                        mscnt = e['milestoneIndexEnd']-e['milestoneIndexStart']
-                        currmscnt = max(min(e['milestone'], e['milestoneIndexEnd'])-e['milestoneIndexStart'], 0.000001)
-                        accumulated = f'Total {0.1*answer["accumulated"]/(circ*currmscnt):.2f}% / {0.1*answer["accumulated"]/(circ*mscnt):.2f}%'
-                        #total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
+                        projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-max(e["milestone"], e["milestoneIndexStart"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
+                        # total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
                         outstr = f'''{current}
-                        {accumulated}'''
+                        {projection}'''
                         
                         embed.add_field(name=answer['text'], value=outstr)
                         if len(embed.fields) > 20:
