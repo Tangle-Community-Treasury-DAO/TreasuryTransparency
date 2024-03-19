@@ -526,7 +526,7 @@ iota = {
     'sentimentDOWN': 0,
     'twitter': 0,
     'circulating': 0,
-    'supply': 0
+    'supply': 0,
 }
 smr = {
     'price': 0,
@@ -664,6 +664,8 @@ async def update_votings():
                 )
                 output_ids_smr = client_smr.basic_output_ids(qp).items
                 outputs_smr = client_smr.get_outputs(output_ids_smr)
+                VOTINGS['SMR']={}
+
                 for o in outputs_smr:
                     addr = Utils.hex_to_bech32(o.output.unlockConditions[0].address.pubKeyHash, 'smr')
                     features = o.output.features
@@ -692,6 +694,7 @@ async def update_votings():
                 )
                 output_ids_iota = client_iota.basic_output_ids(qp).items
                 outputs_iota = client_iota.get_outputs(output_ids_iota)
+                VOTINGS['IOTA']={}
                 for o in outputs_iota:
                     addr = Utils.hex_to_bech32(o.output.unlockConditions[0].address.pubKeyHash, 'iota')
                     features = o.output.features
@@ -733,7 +736,7 @@ async def update_price():
                 iota["price24h"] = iotarsp["market_data"]["price_change_percentage_24h_in_currency"]["usd"]
                 iota["mc"] = iotarsp["market_data"]["market_cap"]["usd"]
                 iota["rank"] = iotarsp["market_data"]["market_cap_rank"]
-                iota["supply"] = iotarsp["market_data"]["total_supply"]
+                iota["supply"] = iotarsp["market_data"]["max_supply"]
                 iota["circulating"] = iotarsp["market_data"]["circulating_supply"]
 
             async with session.get(smr_url, timeout=5) as resp:
@@ -747,8 +750,8 @@ async def update_price():
                 smr["mc"] = max(smrrsp["market_data"]["market_cap"]["usd"], smr["price"] * 1813620509)
                 smr["rank"] = smrrsp["market_data"]["market_cap_rank"]
                 smr["watchlists"] = smrrsp["watchlist_portfolio_users"]
-                smr["supply"] = smrrsp["market_data"]["total_supply"]
-                smr["circulating"] = max(smrrsp["market_data"]["circulating_supply"], smr["supply"])
+                smr["supply"] = smrrsp["market_data"]["max_supply"]
+                smr["circulating"] = max(smrrsp["market_data"]["circulating_supply"], smrrsp["market_data"]["total_supply"])
 
         except:
             pass
@@ -1176,7 +1179,7 @@ async def update_tangleswap():
     return needsUpdate
 
 # update IOTABee positions, can handle any uniswap v3 LP
-async def update_univ3():
+async def update_univ3():# 
     needsUpdate = False
 
     #region get deposited NFTs from blockchain, outdated
@@ -1553,7 +1556,7 @@ async def addfarm(ctx, arg):
             await ctx.message.add_reaction('⛔')
 
 # prints current SMR and IOTA token information
-@bot.command(aliases=['P'])
+@bot.command(aliases=['P', "pi", "Pi"])
 async def p(ctx):
     global ptime
     if ctx.channel.id in PCHANNELS or ctx.author.id in ADMINS:
@@ -1651,7 +1654,7 @@ async def convert(ctx, arg):
             await ctx.message.add_reaction('⛔')
 
 # displays votes, filtered by address and/or event id/name
-@bot.command()
+@bot.command(aliases=["vote"])
 async def votes(ctx, *args):
     if ctx.channel.id in PCHANNELS or ctx.author.id in ADMINS:
         try:
@@ -1715,7 +1718,7 @@ async def votes(ctx, *args):
             await ctx.message.add_reaction('⛔')
 
 # displays events, filtered by name and/or id
-@bot.command()
+@bot.command(aliases=["event"])
 async def events(ctx, *args):
     if ctx.channel.id in PCHANNELS or ctx.author.id in ADMINS:
         try:
