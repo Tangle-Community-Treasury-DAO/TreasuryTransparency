@@ -20,6 +20,19 @@ import pandas as pd
 w3 = Web3(AsyncHTTPProvider('https://json-rpc.evm.shimmer.network'), modules={'eth': (AsyncEth,)}, middlewares=[])
 cabi = [
     {
+        "inputs": [],
+        "name": "poolLength",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
             "internalType": "address",
@@ -1237,7 +1250,7 @@ async def update_univ3():#
         foundAll = False
         while not foundAll:
             try:
-                NFTid = await fc.functions.userNFTs(address, ).call()
+                NFTid = await fc.functions.userNFTs(address, i).call()
                 fts.append(NFTid)
                 i+=1
             except:
@@ -1750,7 +1763,7 @@ async def events(ctx, *args):
                 embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
                 embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
                 
-                embed.add_field(name = f'{progress_bar(get_percentage( e['milestoneIndexStart'], e['milestoneIndexEnd'], e['milestone']))} elapsed', value='')
+                embed.add_field(name = f'{progress_bar(get_percentage( e["milestoneIndexStart"], e["milestoneIndexEnd"], e["milestone"]))} elapsed', value='')
 
                 questions = e['payload']['questions']
                 for i in range(len(questions)):
