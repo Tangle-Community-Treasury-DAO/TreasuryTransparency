@@ -613,7 +613,8 @@ def get_percentage(start, end, t):
 
 # thread to update current event standings frequently
 async def update_votings():
-    smr_node = "https://api.shimmer.network"
+    smr_node = "https://shimmer-node.tanglebay.com"
+    # smr_node = "https://api.shimmer.network"
     iota_node = "https://iota-node.tanglebay.com"
     part_endpoint = '/api/participation/v1/events'
 
@@ -766,8 +767,8 @@ async def update_price():
                 # iota["circulating"] = iotarsp["market_data"]["circulating_supply"]
                 net_launch = 1681113738
                 now = time.time()
-                weeks_passed = (now - net_launch) // (2*7*86400)
-                iota["circulating"] = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(weeks_passed/208,1))+325469717*(0.1+0.9*min(weeks_passed/208,1))+161000000*(0.1+0.9*min(weeks_passed/104,1))+230000000*(0.1+0.9*min(weeks_passed/104,1))
+                bi_weeks_passed = (now - net_launch) // (2*7*86400)
+                iota["circulating"] = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(bi_weeks_passed/208,1))+325469717*(0.1+0.9*min(bi_weeks_passed/208,1))+161000000*(0.1+0.9*min(bi_weeks_passed/104,1))+230000000*(0.1+0.9*min(bi_weeks_passed/104,1))
 
 
             async with session.get(smr_url, timeout=5) as resp:
@@ -1841,6 +1842,29 @@ async def richlist(ctx, *args):
             await ctx.message.add_reaction('✅')
         except Exception as e:
             await ctx.message.add_reaction('⛔')
+
+@bot.command(aliases=["c"])
+async def circulating(ctx, *args):
+    if ctx.channel.id in PCHANNELS or ctx.author.id in ADMINS:
+        try:
+            net_launch = 1681113738
+            now = time.time()
+            bi_weeks_passed = (now - net_launch) // (2*7*86400)
+            total = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(bi_weeks_passed/208,1))+325469717*(0.1+0.9*min(bi_weeks_passed/208,1))+161000000*(0.1+0.9*min(bi_weeks_passed/104,1))+230000000*(0.1+0.9*min(bi_weeks_passed/104,1))
+
+            embed = discord.Embed(title='Circulating IOTA Supply', color=0xFF5733)
+
+            embed.add_field(name=f'{bi_weeks_passed:.0f} biweekly unlocks since 04.10.2023', value = f'2,529,939,788 old tokens, 54,896,344 DAO +7,664,631 migrated tokens', inline=False)
+            embed.add_field(name=f'{552000000*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} UAE, {552000000*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} TEA unlocks', value='', inline=False)
+            embed.add_field(name=f'{325469717*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} IF unlocks', value='', inline=False)
+            embed.add_field(name=f'{161000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} Assembly unlocks', value='', inline=False)
+            embed.add_field(name=f'{230000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} contributor unlocks', value='', inline=False)
+            embed.add_field(name=f'TOTAL: {total:,.0f} IOTA', value='')
+            await ctx.send(embed=embed)
+            await ctx.message.add_reaction('✅')
+        except Exception as e:
+            await ctx.message.add_reaction('⛔')
+
 
 # endregion 
             
