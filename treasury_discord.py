@@ -911,16 +911,18 @@ async def update_thread():
 async def update_status():
     # every update own variable because python skips all further methods in "or" clause 
     # if it found a true one already
-    upFarms = await update_farms() #run first because it pulls liquidity for update_univ2
-    upLP = await update_univ2()
-    upSwap = await update_swapline()
-    upTangle = await update_tangleswap()
-    upBee = await update_univ3()
-    upLend = await update_lending()
-    upTok = await update_tokens()
-    upLum = await update_lum()
+    threads = [update_farms() ,update_swapline(), update_tangleswap(), update_univ3(), update_lending() , update_tokens()]
+    results = await asyncio.gather(*threads, return_exceptions=True)
+    upLP = await update_univ2() # requires update on farms first
+    # upSwap = await update_swapline()
+    # upTangle = await update_tangleswap()
+    # upBee = await update_univ3()
+    # upLend = await update_lending()
+    # upTok = await update_tokens()
+    # upLum = await update_lum()
     #return any position changed
-    return upFarms or upTok or upLP or upTangle or upBee or upSwap  or upLend or upLum
+    # return upFarms or upTok or upLP or upTangle or upBee or upSwap  or upLend or upLum
+    return upLP or any(results)
 
 # update ERC-20 holdings, can handle any ERC-20
 # all information about tokens in any pools are pulled from this TOKENS variable
