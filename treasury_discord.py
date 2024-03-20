@@ -1019,6 +1019,11 @@ async def update_univ2():
 # update swapline positions through their API
 async def update_swapline():
     needsUpdate = False
+    for pair in SWAPLINE:
+        SWAPLINE[pair]["amount"] = 0
+        SWAPLINE[pair]["depositX"] = 0
+        SWAPLINE[pair]["depositY"] = 0
+
     for address in TREASURYADDRESSES:
         try:
             # get all positions in all treasury wallets
@@ -1146,6 +1151,10 @@ async def update_lum():
 # update tangleswap positions
 async def update_tangleswap():
     needsUpdate = False
+    for pair in TANGLESWAP:
+        TANGLESWAP[pair]["amount"] = 0
+        TANGLESWAP[pair]["depositX"] = 0
+        TANGLESWAP[pair]["depositY"] = 0
     for address in TREASURYADDRESSES:
         try:
             # get all position NFT IDs from tangleswap API
@@ -1208,6 +1217,12 @@ async def update_tangleswap():
 async def update_univ3():# 
     needsUpdate = False
 
+
+    for tokenid in IOTABEE:
+        IOTABEE[tokenid]["amount"] = 0
+        IOTABEE[tokenid]["depositX"] = 0
+        IOTABEE[tokenid]["depositY"] = 0
+  
     #region get deposited NFTs from blockchain, outdated
     # blockscout grrrr
     # since the staking SC isn't verified and we can't read it yet, 
