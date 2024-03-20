@@ -763,7 +763,12 @@ async def update_price():
                 iota["mc"] = iotarsp["market_data"]["market_cap"]["usd"]
                 iota["rank"] = iotarsp["market_data"]["market_cap_rank"]
                 iota["supply"] = iotarsp["market_data"]["max_supply"]
-                iota["circulating"] = iotarsp["market_data"]["circulating_supply"]
+                # iota["circulating"] = iotarsp["market_data"]["circulating_supply"]
+                net_launch = 1681113738
+                now = time.time()
+                weeks_passed = (now - net_launch) // (2*7*86400)
+                iota["circulating"] = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(weeks_passed/208,1))+325469717*(0.1+0.9*min(weeks_passed/208,1))+161000000*(0.1+0.9*min(weeks_passed/104,1))+230000000*(0.1+0.9*min(weeks_passed/104,1))
+
 
             async with session.get(smr_url, timeout=5) as resp:
                 smrrsp = await resp.json()
