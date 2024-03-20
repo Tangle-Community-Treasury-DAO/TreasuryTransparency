@@ -742,7 +742,7 @@ async def update_votings():
                                 VOTINGS['IOTA'][eventid].append([addr, datetime.fromtimestamp(o.metadata.milestoneTimestampBooked).strftime("%m/%d/%Y, %H:%M:%S"), weight, answers])
 
         except Exception as e:
-            pass
+            print(e)
         await asyncio.sleep(VFREQUENCY)
         
 # update and store price metrics in static variables from coingecko 
@@ -779,8 +779,8 @@ async def update_price():
                 smr["supply"] = smrrsp["market_data"]["max_supply"]
                 smr["circulating"] = max(smrrsp["market_data"]["circulating_supply"], smrrsp["market_data"]["total_supply"])
 
-        except:
-            pass
+        except Exception as e:
+            print(e)
         await asyncio.sleep(PFREQUENCY)
     pass
 
@@ -903,8 +903,8 @@ async def update_thread():
             for c in channels:
                 try:
                     await output_status(c)
-                except:
-                    pass
+                except Exception as e:
+                    print(e)
         await asyncio.sleep(60*60*24)
    
 # update all holdings
@@ -943,8 +943,8 @@ async def update_tokens():
             if abs(max(amount, 0.000000000000001)/max(TOKENS[id]["amount"], 0.000000000000001)-1) > 0.01:
                 needsUpdate = True
             TOKENS[id]["amount"] = amount
-        except:
-            pass
+        except Exception as e:
+            print(e)
     return needsUpdate
 
 # update uniswap v2 LP positions, can handle any v2 LP
@@ -1012,8 +1012,8 @@ async def update_univ2():
             pair["amount"] = bal
             LPSV2[id]["tok0amount"] = reserves[0] * share * 10**-decimals0
             LPSV2[id]["tok1amount"] = reserves[1] * share * 10**-decimals1
-        except:
-            pass
+        except Exception as e:
+            print(e)
     return needsUpdate
 
 # update swapline positions through their API
@@ -1066,7 +1066,7 @@ async def update_swapline():
                     SWAPLINE[pair]["depositY"] = p["depositY"]
                 pass    
         except Exception as e:
-            pass
+            print(e)
     return needsUpdate
 
 # update deepr lending positions
@@ -1102,8 +1102,8 @@ async def update_lending():
             if abs(max(amount, 0.000000000000001)/max(DEEPR[id]["amount"], 0.000000000000001)-1) > 0.01:
                 needsUpdate = True
             DEEPR[id]["amount"] = amount
-        except:
-            pass
+        except Exception as e:
+            print(e)
     return needsUpdate
 
 # update all farms of v2 liquidity tokens
@@ -1134,8 +1134,8 @@ async def update_farms():
                     needsUpdate = True
                 
                 FARMS[id][i]["amount"] = amount
-        except:
-            pass
+        except Exception as e:
+            print(e)
     return needsUpdate
 
 # pull staked and boosted Lum and mLum tokens
@@ -1201,7 +1201,7 @@ async def update_tangleswap():
                     TANGLESWAP[pid]["depositY"] = pos[1] * 10**-decimals1
                     
         except Exception as e:
-            pass
+            print(e)
     return needsUpdate
 
 # update IOTABee positions, can handle any uniswap v3 LP
@@ -1329,7 +1329,7 @@ async def update_univ3():#
                 IOTABEE[tokenid]["depositY"] = share * poolY * 10**-decimals1
   
         except Exception as e:
-            pass
+            print(e)
     return needsUpdate
 
 # endregion
