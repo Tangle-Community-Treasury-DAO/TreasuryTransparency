@@ -16,6 +16,9 @@ import pandas as pd
 # endregion
 
 # region statics
+
+path = ''
+# path = 'IOTA/various/evm/treasurytransparency/'
 # rpc provider, add an abi to cavi if needed
 w3 = Web3(AsyncHTTPProvider('https://json-rpc.evm.shimmer.network'), modules={'eth': (AsyncEth,)}, middlewares=[])
 cabi = [
@@ -493,8 +496,6 @@ cabi = [
 ]
 
 # load statics from config
-path = ''
-# path = 'IOTA/various/evm/treasurytransparency/'
 configpath = path+'startup.cfg'
 
 config = configparser.RawConfigParser()
@@ -785,6 +786,13 @@ async def update_price():
                 smr["supply"] = smrrsp["market_data"]["max_supply"]
                 smr["circulating"] = max(smrrsp["market_data"]["circulating_supply"], smrrsp["market_data"]["total_supply"])
 
+            explorer_url = 'https://explorer-api.iota.org/networks'
+            async with session.get(explorer_url, timeout=5) as resp:
+                explorerRsp = await resp.json()
+                iotanet = [r for r in explorerRsp["networks"] if r['network']=='mainnet']
+                smrnet = [r for r in explorerRsp["networks"] if r['network']=='shimmer']
+                iota["circulating2"] = iotanet[0]['circulatingSupply']* 10**-6
+                smr["circulating2"] =  smrnet[0]['circulatingSupply']* 10**-6
         except Exception as e:
             print(e)
         await asyncio.sleep(PFREQUENCY)
@@ -1779,12 +1787,16 @@ async def events(ctx, *args):
             for e in events:
                 if 'igp' in e['name'].lower():
                     circ = iota['circulating']
+                    circ2 = iota['circulating2']
                     tok = 'IOTA'
                 else:
                     tok = 'SMR'
-                    circ = smr['circulating']
+                    circ2 = smr['circulating']
+                    #circ2 = smr['circulating2'] 
                     circ = smr['supply']
                 embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
+                if 'lastUpdated' in e:
+                    embed.timestamp = datetime.fromtimestamp(e["lastUpdated"])
                 embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
                 
                 embed.add_field(name = f'{progress_bar(get_percentage( e["milestoneIndexStart"], e["milestoneIndexEnd"], e["milestone"]))} elapsed', value='')
@@ -1793,23 +1805,28 @@ async def events(ctx, *args):
                 for i in range(len(questions)):
                     question = questions[i]['text']
                     goal = 0.05 * circ * (e['milestoneIndexEnd'] - e['milestoneIndexStart'])
+                    goal2 = 0.05 * circ2 * (e['milestoneIndexEnd'] - e['milestoneIndexStart'])
                     timeleft = max(0,(min(e['milestoneIndexEnd']-e['milestone'],e['milestoneIndexEnd'] - e['milestoneIndexStart'])))
                     answers = questions[i]['answers']
 
                     accumulated = 0.001* sum([a['accumulated'] for a in answers])
                     current = 0.001* sum([a['current'] for a in answers])
                     missing = max((goal - accumulated) / max(timeleft,0.0000000000000001) - current,0)
-                    if missing > circ:
+                    missing2 = max((goal2 - accumulated) / max(timeleft,0.0000000000000001) - current,0)
+                    if missing > circ or missing2 > circ2:
                         missing = -1
-                    # embed.add_field(name=question, value=f'{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
+                    if missing2+missing ==0:
+                        embed.add_field(name=question, value=f'0 Tokens missing for 5% Quorum', inline=False)
+                    else:
+                        embed.add_field(name=question, value=f'{missing2:,.0f}-{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
                     
                     for j in range(len(answers)):
                         answer = answers[j]
-                        current = f'{0.001*answer["current"]:,.0f} {tok}'# ({0.1*answer["current"]/circ:.2f}%)'
-                        projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
+                        current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%-{0.1*answer["current"]/circ2:.2f}%)'
+                        projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%-{0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ2*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
                         # total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
-                        outstr = f'''{current}'''
-                        #{projection}'''
+                        outstr = f'''{current}
+                        {projection}'''
                         
                         embed.add_field(name=answer['text'], value=outstr)
                         if len(embed.fields) > 20:
@@ -1819,7 +1836,9 @@ async def events(ctx, *args):
                             if j < len(answers)-1:
                                 embed.add_field(name=question, value='', inline=False)
                 if 'lastUpdated' in e:
-                    embed.set_footer(text=f'last Update {time.time()-e["lastUpdated"]:.0f}s ago')
+                    footer = f'Based on circulating supply of {circ:,.0f} - resp. {circ2:,.0f}.\nLast update:'
+                    #last Update {time.time()-e["lastUpdated"]:.0f}s ago'''
+                    embed.set_footer(text=footer)
                 await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
         except Exception as e:
