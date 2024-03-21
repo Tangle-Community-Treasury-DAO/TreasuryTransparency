@@ -765,7 +765,7 @@ async def update_price():
                 iota["mc"] = iotarsp["market_data"]["market_cap"]["usd"]
                 iota["rank"] = iotarsp["market_data"]["market_cap_rank"]
                 iota["supply"] = iotarsp["market_data"]["max_supply"]
-                # iota["circulating"] = iotarsp["market_data"]["circulating_supply"]
+                iota["circulating3"] = iotarsp["market_data"]["circulating_supply"]
                 net_launch = 1681113738
                 now = time.time()
                 bi_weeks_passed = (now - net_launch) // (2*7*86400)
@@ -1786,7 +1786,7 @@ async def events(ctx, *args):
             # print filtered events
             for e in events:
                 if 'igp' in e['name'].lower():
-                    circ = iota['circulating']
+                    circ = iota['circulating3']
                     circ2 = iota['circulating2']
                     tok = 'IOTA'
                 else:
@@ -1836,14 +1836,8 @@ async def events(ctx, *args):
                             if j < len(answers)-1:
                                 embed.add_field(name=question, value='', inline=False)
                 if 'lastUpdated' in e:
-                    if tok =='SMR':
-                        footer = f'Based on circulating supply of {circ:,.0f} - resp. {circ2:,.0f}.\nLast update:'
-                        #last Update {time.time()-e["lastUpdated"]:.0f}s ago'''
-                        embed.set_footer(text=footer)
-                    else:
-                        footer = f'Based on circulating supply of {circ:,.0f} - resp. {circ2:,.0f}. See !c\nLast update:'
-                        #last Update {time.time()-e["lastUpdated"]:.0f}s ago'''
-                        embed.set_footer(text=footer)
+                    footer = f'Based on circulating supply of {circ:,.0f} - {circ2:,.0f}. See !c\nLast update:'
+                    embed.set_footer(text=footer)
                 await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
         except Exception as e:
@@ -1876,6 +1870,7 @@ async def circulating(ctx, *args):
             bi_weeks_passed = (now - net_launch) // (2*7*86400)
             total = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(bi_weeks_passed/208,1))+325469717*(0.1+0.9*min(bi_weeks_passed/208,1))+161000000*(0.1+0.9*min(bi_weeks_passed/104,1))+230000000*(0.1+0.9*min(bi_weeks_passed/104,1))
             total2 = iota["circulating2"]
+            total3 = iota["circulating3"]
             embed = discord.Embed(title='Circulating IOTA Supply', color=0xFF5733)
 
             embed.add_field(value=f'{bi_weeks_passed:.0f} biweekly unlocks since 04.10.2023:', name = f'2,529,939,788 old tokens, 54,896,344 DAO +7,664,631 migrated tokens', inline=False)
@@ -1884,7 +1879,13 @@ async def circulating(ctx, *args):
             embed.add_field(name=f'{161000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} Assembly unlocks', value='', inline=False)
             embed.add_field(name=f'{230000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} contributor unlocks', value='', inline=False)
             embed.add_field(name=f'TOTAL: {total:,.0f} IOTA', value='', inline=False)
-            embed.add_field(name=f'Reported by Explorer: {total2:,.0f} IOTA', value='')
+            embed.add_field(name=f'Reported by Explorer: {total2:,.0f} IOTA', value='', inline=False)
+            embed.add_field(name=f'Reported by node: {total3:,.0f} IOTA', value='', inline=False)
+            await ctx.send(embed=embed)
+
+            embed = discord.Embed(title='Circulating SMR Supply', color=0xFF5733)
+            embed.add_field(name=f'Total Supply: {smr["supply"]:,.0f} SMR', value='', inline=False)
+            embed.add_field(name=f'Circulating reported by Coingecko: {smr["circulating"]:,.0f} SMR', value='', inline=False)
             await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
         except Exception as e:
