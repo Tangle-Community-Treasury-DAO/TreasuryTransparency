@@ -635,10 +635,10 @@ async def update_votings():
             smrMilestone = client_smr.get_info().nodeInfo.status.confirmedMilestone.index
             for id in smreventids:
                 #pull basic event information from nodes participation plugin
-                async with session.get(smr_node+part_endpoint+'/'+id, timeout=5) as resp:
+                async with session.get(smr_node+part_endpoint+'/'+id, timeout=10) as resp:
                     EVENTS[id] = await resp.json()
                 #pull current event information from nodes participation plugin
-                async with session.get(smr_node+part_endpoint+'/'+id+'/status', timeout=5) as resp:
+                async with session.get(smr_node+part_endpoint+'/'+id+'/status', timeout=10) as resp:
                     status = await resp.json()
                     EVENTS[id]['status'] = status['status']
                     EVENTS[id]['milestone'] = smrMilestone
@@ -1836,9 +1836,14 @@ async def events(ctx, *args):
                             if j < len(answers)-1:
                                 embed.add_field(name=question, value='', inline=False)
                 if 'lastUpdated' in e:
-                    footer = f'Based on circulating supply of {circ:,.0f} - resp. {circ2:,.0f}.\nLast update:'
-                    #last Update {time.time()-e["lastUpdated"]:.0f}s ago'''
-                    embed.set_footer(text=footer)
+                    if tok =='SMR':
+                        footer = f'Based on circulating supply of {circ:,.0f} - resp. {circ2:,.0f}.\nLast update:'
+                        #last Update {time.time()-e["lastUpdated"]:.0f}s ago'''
+                        embed.set_footer(text=footer)
+                    else:
+                        footer = f'Based on circulating supply of {circ:,.0f} - resp. {circ2:,.0f}. See !c\nLast update:'
+                        #last Update {time.time()-e["lastUpdated"]:.0f}s ago'''
+                        embed.set_footer(text=footer)
                 await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
         except Exception as e:
@@ -1870,7 +1875,7 @@ async def circulating(ctx, *args):
             now = time.time()
             bi_weeks_passed = (now - net_launch) // (2*7*86400)
             total = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(bi_weeks_passed/208,1))+325469717*(0.1+0.9*min(bi_weeks_passed/208,1))+161000000*(0.1+0.9*min(bi_weeks_passed/104,1))+230000000*(0.1+0.9*min(bi_weeks_passed/104,1))
-
+            total2 = iota["circulating2"]
             embed = discord.Embed(title='Circulating IOTA Supply', color=0xFF5733)
 
             embed.add_field(value=f'{bi_weeks_passed:.0f} biweekly unlocks since 04.10.2023:', name = f'2,529,939,788 old tokens, 54,896,344 DAO +7,664,631 migrated tokens', inline=False)
@@ -1878,7 +1883,8 @@ async def circulating(ctx, *args):
             embed.add_field(name=f'{325469717*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} IF unlocks', value='', inline=False)
             embed.add_field(name=f'{161000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} Assembly unlocks', value='', inline=False)
             embed.add_field(name=f'{230000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} contributor unlocks', value='', inline=False)
-            embed.add_field(name=f'TOTAL: {total:,.0f} IOTA', value='')
+            embed.add_field(name=f'TOTAL: {total:,.0f} IOTA', value='', inline=False)
+            embed.add_field(name=f'Reported by Explorer: {total2:,.0f} IOTA', value='')
             await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
         except Exception as e:
