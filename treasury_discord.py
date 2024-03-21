@@ -1801,15 +1801,15 @@ async def events(ctx, *args):
                     missing = max((goal - accumulated) / max(timeleft,0.0000000000000001) - current,0)
                     if missing > circ:
                         missing = -1
-                    embed.add_field(name=question, value=f'{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
+                    # embed.add_field(name=question, value=f'{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
                     
                     for j in range(len(answers)):
                         answer = answers[j]
-                        current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)'
+                        current = f'{0.001*answer["current"]:,.0f} {tok}'# ({0.1*answer["current"]/circ:.2f}%)'
                         projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
                         # total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
-                        outstr = f'''{current}
-                        {projection}'''
+                        outstr = f'''{current}'''
+                        #{projection}'''
                         
                         embed.add_field(name=answer['text'], value=outstr)
                         if len(embed.fields) > 20:
@@ -1854,7 +1854,7 @@ async def circulating(ctx, *args):
 
             embed = discord.Embed(title='Circulating IOTA Supply', color=0xFF5733)
 
-            embed.add_field(value=f'{bi_weeks_passed:.0f} biweekly unlocks since 04.10.2023', name = f'2,529,939,788 old tokens, 54,896,344 DAO +7,664,631 migrated tokens', inline=False)
+            embed.add_field(value=f'{bi_weeks_passed:.0f} biweekly unlocks since 04.10.2023:', name = f'2,529,939,788 old tokens, 54,896,344 DAO +7,664,631 migrated tokens', inline=False)
             embed.add_field(name=f'{552000000*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} UAE, {552000000*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} TEA unlocks', value='', inline=False)
             embed.add_field(name=f'{325469717*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} IF unlocks', value='', inline=False)
             embed.add_field(name=f'{161000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} Assembly unlocks', value='', inline=False)
