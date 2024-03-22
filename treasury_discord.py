@@ -1793,7 +1793,7 @@ async def events(ctx, *args):
                     if e['startTimeStamp'] <= stardustStart:
                         circ = 2779530283
                     else:
-                        bi_weeks_passed = (time.time() - stardustStart) // (2*7*86400)
+                        bi_weeks_passed = (now - stardustStart) // (2*7*86400)
                         bi_weeks_event_start = ((e['startTimeStamp']) - stardustStart) // (2*7*86400)
                         vesting4 = 552000000*2+325469717
                         vesting2 = 161000000+230000000
@@ -1847,6 +1847,8 @@ async def events(ctx, *args):
                         if len(embed.fields) > 20:
                             await ctx.send(embed=embed)
                             embed = embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
+                            if 'lastUpdated' in e:
+                                embed.timestamp = datetime.fromtimestamp(e["lastUpdated"])
                             embed.set_author(name="Tangle Treasury", url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
                             if j < len(answers)-1:
                                 embed.add_field(name=question, value='', inline=False)
