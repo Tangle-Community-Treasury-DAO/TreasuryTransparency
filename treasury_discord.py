@@ -642,12 +642,13 @@ async def update_votings():
                     status = await resp.json()
                     EVENTS[id]['status'] = status['status']
                     EVENTS[id]['milestone'] = smrMilestone
+                    EVENTS[id]['startTimeStamp'] = client_smr.get_milestone_by_index(EVENTS[id]['milestoneIndexStart']).timestamp
                     #if currently an event active, pull all outputs after event starting date later on
                     if status['status']=='commencing' or status['status']=='holding':
                         pullSmrOuts = True
                         pullSmrMilestone = min(pullSmrMilestone, EVENTS[id]['milestoneIndexCommence'])
-                        milestone = client_smr.get_milestone_by_index(smrMilestone)
-                        EVENTS[id]['lastUpdated'] = milestone.timestamp
+                    milestone = client_smr.get_milestone_by_index(smrMilestone)
+                    EVENTS[id]['lastUpdated'] = milestone.timestamp
                     #insert current eevnt sandings into EVENTS object
                     for i in range(len(status['questions'])):
                         for j in range(len(status['questions'][i]['answers'])):
@@ -670,11 +671,12 @@ async def update_votings():
                     status = await resp.json()
                     EVENTS[id]['status'] = status['status']
                     EVENTS[id]['milestone'] = iotaMilestone
+                    EVENTS[id]['startTimeStamp'] = client_iota.get_milestone_by_index(EVENTS[id]['milestoneIndexStart']).timestamp
                     if status['status']=='commencing' or status['status']=='holding':
                         pullIotaOuts = True
                         pullIotaMilestone = min(pullIotaMilestone, EVENTS[id]['milestoneIndexCommence'])
-                        milestone = client_iota.get_milestone_by_index(iotaMilestone)
-                        EVENTS[id]['lastUpdated'] = milestone.timestamp
+                    milestone = client_iota.get_milestone_by_index(iotaMilestone)
+                    EVENTS[id]['lastUpdated'] = milestone.timestamp
                     for i in range(len(status['questions'])):
                         for j in range(len(status['questions'][i]['answers'])):
                             if j < len(EVENTS[id]['payload']['questions'][i]['answers']):
@@ -765,11 +767,11 @@ async def update_price():
                 iota["mc"] = iotarsp["market_data"]["market_cap"]["usd"]
                 iota["rank"] = iotarsp["market_data"]["market_cap_rank"]
                 iota["supply"] = iotarsp["market_data"]["max_supply"]
-                iota["circulating3"] = iotarsp["market_data"]["circulating_supply"]
-                net_launch = 1681113738
-                now = time.time()
-                bi_weeks_passed = (now - net_launch) // (2*7*86400)
-                iota["circulating"] = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(bi_weeks_passed/208,1))+325469717*(0.1+0.9*min(bi_weeks_passed/208,1))+161000000*(0.1+0.9*min(bi_weeks_passed/104,1))+230000000*(0.1+0.9*min(bi_weeks_passed/104,1))
+                iota["circulating"] = iotarsp["market_data"]["circulating_supply"]
+                # net_launch = 1681113738
+                # now = time.time()
+                # bi_weeks_passed = (now - net_launch) // (2*7*86400)
+                # iota["circulating"] = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(bi_weeks_passed/208,1))+325469717*(0.1+0.9*min(bi_weeks_passed/208,1))+161000000*(0.1+0.9*min(bi_weeks_passed/104,1))+230000000*(0.1+0.9*min(bi_weeks_passed/104,1))
 
 
             async with session.get(smr_url, timeout=5) as resp:
@@ -784,15 +786,15 @@ async def update_price():
                 smr["rank"] = smrrsp["market_data"]["market_cap_rank"]
                 smr["watchlists"] = smrrsp["watchlist_portfolio_users"]
                 smr["supply"] = smrrsp["market_data"]["max_supply"]
-                smr["circulating"] = max(smrrsp["market_data"]["circulating_supply"], smrrsp["market_data"]["total_supply"])
-
-            explorer_url = 'https://explorer-api.iota.org/networks'
-            async with session.get(explorer_url, timeout=5) as resp:
-                explorerRsp = await resp.json()
-                iotanet = [r for r in explorerRsp["networks"] if r['network']=='mainnet']
-                smrnet = [r for r in explorerRsp["networks"] if r['network']=='shimmer']
-                iota["circulating2"] = iotanet[0]['circulatingSupply']* 10**-6
-                smr["circulating2"] =  smrnet[0]['circulatingSupply']* 10**-6
+                # smr["circulating"] = max(smrrsp["market_data"]["circulating_supply"], smrrsp["market_data"]["total_supply"])
+                smr["circulating"] = smrrsp["market_data"]["max_supply"]
+            # explorer_url = 'https://explorer-api.iota.org/networks'
+            # async with session.get(explorer_url, timeout=5) as resp:
+            #     explorerRsp = await resp.json()
+            #     iotanet = [r for r in explorerRsp["networks"] if r['network']=='mainnet']
+            #     smrnet = [r for r in explorerRsp["networks"] if r['network']=='shimmer']
+            #     iota["circulating2"] = iotanet[0]['circulatingSupply']* 10**-6
+            #     smr["circulating2"] =  smrnet[0]['circulatingSupply']* 10**-6
         except Exception as e:
             print(e)
         await asyncio.sleep(PFREQUENCY)
@@ -1786,14 +1788,26 @@ async def events(ctx, *args):
             # print filtered events
             for e in events:
                 if 'igp' in e['name'].lower():
-                    circ = iota['circulating3']
-                    circ2 = iota['circulating2']
+                    now = time.time()
+                    stardustStart = 1696384800
+                    if e['startTimeStamp'] <= stardustStart:
+                        circ = 2779530283
+                    else:
+                        bi_weeks_passed = (time.time() - stardustStart) // (2*7*86400)
+                        bi_weeks_event_start = ((e['startTimeStamp']) - stardustStart) // (2*7*86400)
+                        vesting4 = 552000000*2+325469717
+                        vesting2 = 161000000+230000000
+                        difference = (bi_weeks_passed-bi_weeks_event_start)*0.9*(vesting4*int(bi_weeks_passed<=104)/104+vesting2*int(bi_weeks_passed<=52)/52)
+
+                        circ = iota['circulating'] - difference
+
+                    # circ2 = iota['circulating2']
                     tok = 'IOTA'
                 else:
                     tok = 'SMR'
-                    circ2 = smr['circulating']
+                    #circ2 = smr['circulating']
                     #circ2 = smr['circulating2'] 
-                    circ = smr['supply']
+                    circ = smr['circulating']
                 embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
                 if 'lastUpdated' in e:
                     embed.timestamp = datetime.fromtimestamp(e["lastUpdated"])
@@ -1805,25 +1819,26 @@ async def events(ctx, *args):
                 for i in range(len(questions)):
                     question = questions[i]['text']
                     goal = 0.05 * circ * (e['milestoneIndexEnd'] - e['milestoneIndexStart'])
-                    goal2 = 0.05 * circ2 * (e['milestoneIndexEnd'] - e['milestoneIndexStart'])
+                    #goal2 = 0.05 * circ2 * (e['milestoneIndexEnd'] - e['milestoneIndexStart'])
                     timeleft = max(0,(min(e['milestoneIndexEnd']-e['milestone'],e['milestoneIndexEnd'] - e['milestoneIndexStart'])))
                     answers = questions[i]['answers']
 
                     accumulated = 0.001* sum([a['accumulated'] for a in answers])
                     current = 0.001* sum([a['current'] for a in answers])
                     missing = max((goal - accumulated) / max(timeleft,0.0000000000000001) - current,0)
-                    missing2 = max((goal2 - accumulated) / max(timeleft,0.0000000000000001) - current,0)
-                    if missing > circ or missing2 > circ2:
+                    #missing2 = max((goal2 - accumulated) / max(timeleft,0.0000000000000001) - current,0)
+                    if missing > circ:# or missing2 > circ2:
                         missing = -1
-                    if missing2+missing ==0:
-                        embed.add_field(name=question, value=f'0 Tokens missing for 5% Quorum', inline=False)
-                    else:
-                        embed.add_field(name=question, value=f'{missing2:,.0f}-{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
+                    # if missing2+missing ==0:
+                    #     embed.add_field(name=question, value=f'0 Tokens missing for 5% Quorum', inline=False)
+                    # else:
+                    #     embed.add_field(name=question, value=f'{missing2:,.0f}-{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
+                    embed.add_field(name=question, value=f'{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
                     
                     for j in range(len(answers)):
                         answer = answers[j]
-                        current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%-{0.1*answer["current"]/circ2:.2f}%)'
-                        projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%-{0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ2*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
+                        current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)'#-{0.1*answer["current"]/circ2:.2f}%)'
+                        projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'#-{0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ2*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
                         # total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
                         outstr = f'''{current}
                         {projection}'''
@@ -1836,7 +1851,9 @@ async def events(ctx, *args):
                             if j < len(answers)-1:
                                 embed.add_field(name=question, value='', inline=False)
                 if 'lastUpdated' in e:
-                    footer = f'Based on circulating supply of {circ:,.0f} - {circ2:,.0f}. See !c\nLast update:'
+                    footer = f'Based on circulating supply of {circ:,.0f}.\nLast update:'
+                    if tok == 'IOTA':
+                        footer = f'Based on circulating supply of {circ:,.0f} at event start.\nLast update:'
                     embed.set_footer(text=footer)
                 await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
@@ -1861,35 +1878,35 @@ async def richlist(ctx, *args):
         except Exception as e:
             await ctx.message.add_reaction('⛔')
 
-@bot.command(aliases=["c"])
-async def circulating(ctx, *args):
-    if ctx.channel.id in PCHANNELS or ctx.author.id in ADMINS:
-        try:
-            net_launch = 1681113738
-            now = time.time()
-            bi_weeks_passed = (now - net_launch) // (2*7*86400)
-            total = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(bi_weeks_passed/208,1))+325469717*(0.1+0.9*min(bi_weeks_passed/208,1))+161000000*(0.1+0.9*min(bi_weeks_passed/104,1))+230000000*(0.1+0.9*min(bi_weeks_passed/104,1))
-            total2 = iota["circulating2"]
-            total3 = iota["circulating3"]
-            embed = discord.Embed(title='Circulating IOTA Supply', color=0xFF5733)
+# @bot.command(aliases=["c"])
+# async def circulating(ctx, *args):
+#     if ctx.channel.id in PCHANNELS or ctx.author.id in ADMINS:
+#         try:
+#             net_launch = 1681113738
+#             now = time.time()
+#             bi_weeks_passed = (now - net_launch) // (2*7*86400)
+#             total = 2529939788+54896344+7664631+2*552000000*(0.1+0.9*min(bi_weeks_passed/208,1))+325469717*(0.1+0.9*min(bi_weeks_passed/208,1))+161000000*(0.1+0.9*min(bi_weeks_passed/104,1))+230000000*(0.1+0.9*min(bi_weeks_passed/104,1))
+#             total2 = iota["circulating2"]
+#             total3 = iota["circulating3"]
+#             embed = discord.Embed(title='Circulating IOTA Supply', color=0xFF5733)
 
-            embed.add_field(value=f'{bi_weeks_passed:.0f} biweekly unlocks since 04.10.2023:', name = f'2,529,939,788 old tokens, 54,896,344 DAO +7,664,631 migrated tokens', inline=False)
-            embed.add_field(name=f'{552000000*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} UAE, {552000000*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} TEA unlocks', value='', inline=False)
-            embed.add_field(name=f'{325469717*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} IF unlocks', value='', inline=False)
-            embed.add_field(name=f'{161000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} Assembly unlocks', value='', inline=False)
-            embed.add_field(name=f'{230000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} contributor unlocks', value='', inline=False)
-            embed.add_field(name=f'TOTAL: {total:,.0f} IOTA', value='', inline=False)
-            embed.add_field(name=f'Reported by Explorer: {total2:,.0f} IOTA', value='', inline=False)
-            embed.add_field(name=f'Reported by node: {total3:,.0f} IOTA', value='', inline=False)
-            await ctx.send(embed=embed)
+#             embed.add_field(value=f'{bi_weeks_passed:.0f} biweekly unlocks since 04.10.2023:', name = f'2,529,939,788 old tokens, 54,896,344 DAO +7,664,631 migrated tokens', inline=False)
+#             embed.add_field(name=f'{552000000*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} UAE, {552000000*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} TEA unlocks', value='', inline=False)
+#             embed.add_field(name=f'{325469717*(0.1+0.9*min(bi_weeks_passed/208,1)):,.0f} IF unlocks', value='', inline=False)
+#             embed.add_field(name=f'{161000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} Assembly unlocks', value='', inline=False)
+#             embed.add_field(name=f'{230000000*(0.1+0.9*min(bi_weeks_passed/104,1)):,.0f} contributor unlocks', value='', inline=False)
+#             embed.add_field(name=f'TOTAL: {total:,.0f} IOTA', value='', inline=False)
+#             embed.add_field(name=f'Reported by Explorer: {total2:,.0f} IOTA', value='', inline=False)
+#             embed.add_field(name=f'Reported by node: {total3:,.0f} IOTA', value='', inline=False)
+#             await ctx.send(embed=embed)
 
-            embed = discord.Embed(title='Circulating SMR Supply', color=0xFF5733)
-            embed.add_field(name=f'Total Supply: {smr["supply"]:,.0f} SMR', value='', inline=False)
-            embed.add_field(name=f'Circulating reported by Coingecko: {smr["circulating"]:,.0f} SMR', value='', inline=False)
-            await ctx.send(embed=embed)
-            await ctx.message.add_reaction('✅')
-        except Exception as e:
-            await ctx.message.add_reaction('⛔')
+#             embed = discord.Embed(title='Circulating SMR Supply', color=0xFF5733)
+#             embed.add_field(name=f'Total Supply: {smr["supply"]:,.0f} SMR', value='', inline=False)
+#             embed.add_field(name=f'Circulating reported by Coingecko: {smr["circulating"]:,.0f} SMR', value='', inline=False)
+#             await ctx.send(embed=embed)
+#             await ctx.message.add_reaction('✅')
+#         except Exception as e:
+#             await ctx.message.add_reaction('⛔')
 
 
 # endregion 
