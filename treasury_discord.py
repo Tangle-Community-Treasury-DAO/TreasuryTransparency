@@ -1830,7 +1830,7 @@ async def events(ctx, *args):
                     embed.timestamp = datetime.fromtimestamp(e["lastUpdated"])
                 embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
                 #embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url=iconurl)
-                remaining_seconds = max(int((e["lastUpdated"]-e["startTimeStamp"])*((e["milestoneIndexEnd"]-e["milestoneIndexStart"])/(e["milestone"]-e["milestoneIndexStart"])-1)),0)
+                remaining_seconds = max(int((e["lastUpdated"]-e["startTimeStamp"])*((e["milestoneIndexEnd"]-e["milestoneIndexStart"])/(e["milestone"]-e["milestoneIndexStart"])-1) - time.time()+ e["lastUpdated"]),0)
                 # days = remaining_seconds // 86400
                 # hours = (remaining_seconds % 86400) // 3600
                 # minutes = (remaining_seconds % 3600) // 60
