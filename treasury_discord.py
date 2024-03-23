@@ -11,6 +11,7 @@ from web3.eth import AsyncEth
 
 import discord
 from discord.ext import commands
+from discord.utils import get
 
 import pandas as pd
 # endregion
@@ -902,8 +903,10 @@ async def update_thread():
     # post update to all channels in TREASURYCHANNELS
     for chan in TREASURYCHANNELS:
         channels.append(bot.get_channel(chan))
+    out_counter = 0
     while True: 
         #if positions changed - output the new holdings and save them in config
+        out_counter = (out_counter+1)%24
         if await update_status():
             config.set('watchlist', 'lendtokens', DEEPR)
             config.set('watchlist', 'tokens', TOKENS)
@@ -916,12 +919,13 @@ async def update_thread():
             with open(configpath, 'w') as configfile:
                 config.write(configfile)
 
-            for c in channels:
-                try:
-                    await output_status(c)
-                except Exception as e:
-                    print(e)
-        await asyncio.sleep(60*60*24)
+            if out_counter == 0:
+                for c in channels:
+                    try:
+                        await output_status(c)
+                    except Exception as e:
+                        print(e)
+        await asyncio.sleep(60*60)
    
 # update all holdings
 async def update_status():
@@ -1803,8 +1807,14 @@ async def events(ctx, *args):
 
                     # circ2 = iota['circulating2']
                     tok = 'IOTA'
+                    emoji = get(ctx.message.guild.emojis, name="iota")
+                    #tok = emoji
+                    iconurl = 'https://cdn.discordapp.com/emojis/1218594954914435082.png?size=240'
                 else:
                     tok = 'SMR'
+                    emoji = get(ctx.message.guild.emojis, name="shimmer")
+                    #tok = emoji
+                    iconurl = 'https://cdn.discordapp.com/emojis/1218595450286768169.png?size=240'
                     #circ2 = smr['circulating']
                     #circ2 = smr['circulating2'] 
                     circ = smr['circulating']
@@ -1812,7 +1822,8 @@ async def events(ctx, *args):
                 if 'lastUpdated' in e:
                     embed.timestamp = datetime.fromtimestamp(e["lastUpdated"])
                 embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
-                
+                #embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url=iconurl)
+               
                 embed.add_field(name = f'{progress_bar(get_percentage( e["milestoneIndexStart"], e["milestoneIndexEnd"], e["milestone"]))} elapsed', value='')
 
                 questions = e['payload']['questions']
@@ -1833,29 +1844,28 @@ async def events(ctx, *args):
                     #     embed.add_field(name=question, value=f'0 Tokens missing for 5% Quorum', inline=False)
                     # else:
                     #     embed.add_field(name=question, value=f'{missing2:,.0f}-{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
-                    embed.add_field(name=question, value=f'{missing:,.0f} Tokens missing for 5% Quorum', inline=False)
+                    embed.add_field(name=question, value=f'{emoji} {missing:,.0f} missing for 5% Quorum', inline=False)
                     
                     for j in range(len(answers)):
                         answer = answers[j]
-                        current = f'{0.001*answer["current"]:,.0f} {tok} ({0.1*answer["current"]/circ:.2f}%)'#-{0.1*answer["current"]/circ2:.2f}%)'
+                        current = f'{emoji} {0.001*answer["current"]:,.0f} ({0.1*answer["current"]/circ:.2f}%)'#-{0.1*answer["current"]/circ2:.2f}%)'
                         projection = f'Projection: {0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'#-{0.1*(answer["accumulated"]+answer["current"] * (e["milestoneIndexEnd"]-min(max(e["milestone"], e["milestoneIndexStart"]), e["milestoneIndexEnd"])))/(circ2*(e["milestoneIndexEnd"]-e["milestoneIndexStart"])):.2f}%'
                         # total = f'{0.001*answer["accumulated"]:,.0f} {tok} ({0.1*answer["accumulated"]/(circ*mscnt):.2f}%)'
                         outstr = f'''{current}
                         {projection}'''
                         
                         embed.add_field(name=answer['text'], value=outstr)
-                        if len(embed.fields) > 20:
-                            await ctx.send(embed=embed)
-                            embed = embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
-                            if 'lastUpdated' in e:
-                                embed.timestamp = datetime.fromtimestamp(e["lastUpdated"])
-                            embed.set_author(name="Tangle Treasury", url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
-                            if j < len(answers)-1:
-                                embed.add_field(name=question, value='', inline=False)
+                    if len(embed.fields) > 20:
+                        await ctx.send(embed=embed)
+                        embed = embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
+                        if 'lastUpdated' in e:
+                            embed.timestamp = datetime.fromtimestamp(e["lastUpdated"])
+                        embed.set_author(name="Tangle Treasury", url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
+
                 if 'lastUpdated' in e:
-                    footer = f'Based on circulating supply of {circ:,.0f}.\nLast update:'
+                    footer = f'Based on circulating supply of {circ:,.0f} {tok}.\nLast update:'
                     if tok == 'IOTA':
-                        footer = f'Based on circulating supply of {circ:,.0f} at event start.\nLast update:'
+                        footer = f'Based on circulating supply of {circ:,.0f} {tok} at event start.\nLast update:'
                     embed.set_footer(text=footer)
                 await ctx.send(embed=embed)
             await ctx.message.add_reaction('✅')
