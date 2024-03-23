@@ -1,6 +1,6 @@
 # region imports
 import os, configparser, time, json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import asyncio, aiohttp
 
@@ -607,7 +607,11 @@ def parse_vote(hex_str):
 def progress_bar(percent):
     bar_length = 20
     num_blocks = int(bar_length * percent / 100)
-    bar = '|' + '█' * num_blocks + '░' * (bar_length - num_blocks) + '|' + f' {percent:.2f}%'
+    if num_blocks < bar_length / 2:
+        bar = '|' + '█' * num_blocks + '░' * int((bar_length - num_blocks-6)/2) + f' {percent:.2f}%' + '░' * round((bar_length - num_blocks-6)//2) + '|'
+    else:
+        bar = '|' + '█' * int((num_blocks-6)/2) + f' {percent:.2f}%' + '█' * round((num_blocks-6)/2) + '░' * (bar_length - num_blocks) + '|'
+    bar = '|' + '█' * num_blocks + '░' * (bar_length - num_blocks) + '|'
     return bar
 
 def get_percentage(start, end, t):
@@ -1818,13 +1822,21 @@ async def events(ctx, *args):
                     #circ2 = smr['circulating']
                     #circ2 = smr['circulating2'] 
                     circ = smr['circulating']
+
+                if not emoji:
+                    emoki = tok
                 embed = discord.Embed(title=f'{e["name"]}', color=0xFF5733)
                 if 'lastUpdated' in e:
                     embed.timestamp = datetime.fromtimestamp(e["lastUpdated"])
                 embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url="https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240")
                 #embed.set_author(name="Tangle Treasury",url="https://www.tangletreasury.org/", icon_url=iconurl)
-               
-                embed.add_field(name = f'{progress_bar(get_percentage( e["milestoneIndexStart"], e["milestoneIndexEnd"], e["milestone"]))} elapsed', value='')
+                remaining_seconds = max(int((e["lastUpdated"]-e["startTimeStamp"])*((e["milestoneIndexEnd"]-e["milestoneIndexStart"])/(e["milestone"]-e["milestoneIndexStart"])-1)),0)
+                # days = remaining_seconds // 86400
+                # hours = (remaining_seconds % 86400) // 3600
+                # minutes = (remaining_seconds % 3600) // 60
+                remaining = str(timedelta(seconds=remaining_seconds))
+
+                embed.add_field(name = f'{progress_bar(get_percentage( e["milestoneIndexStart"], e["milestoneIndexEnd"], e["milestone"]))} {remaining} remaining', value='')
 
                 questions = e['payload']['questions']
                 for i in range(len(questions)):
