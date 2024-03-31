@@ -855,7 +855,7 @@ async def output_status(channel):
     await channel.send(embed=embed)
 
     embed = discord.Embed()
-    embed.set_author(name="Tangle Treasury", url="https://www.tangletreasury.org/", icon_url='https://cdn.discordapp.com/attachments/1108370354319147051/1218224680905998468/image.png?ex=6606e325&is=65f46e25&hm=3e1cdf04c7f02a93e5224f5edfdcf16154a2c803507730f27d9d4a839db167e5')
+    embed.set_author(name="Tangle Treasury", url="https://www.tangletreasury.org/", icon_url='https://cdn.discordapp.com/icons/1212015097468424254/d68d92a0a149a6a121a7f0ecbfcc9459.png?size=240')
 
     # format and append swapline positions
     embed.add_field(name='__Swapline:__', value='', inline=False)
