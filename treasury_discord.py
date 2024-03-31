@@ -1306,7 +1306,7 @@ async def update_univ3():#
 
             # we only want those position NFTs in the farm that belong to treasury
             if address==IOTABEEFARM:
-                positions = [p for p in positions if p['tokenid'] in fts]
+                positions = [p for p in positions if int(p['tokenid']) in fts]
 
             # for all position NFTs, pull liquidity tokens from v3 contract
             for p in positions:
