@@ -1,5 +1,5 @@
 # region imports
-import os, configparser, time, json
+import os, configparser, time, json, copy
 from datetime import datetime, timedelta
 
 import asyncio, aiohttp
@@ -1045,6 +1045,7 @@ async def update_univ2():
 # update swapline positions through their API
 async def update_swapline():
     needsUpdate = False
+    swap_back = copy.deepcopy(SWAPLINE)
     for pair in SWAPLINE:
         SWAPLINE[pair]["amount"] = 0
         SWAPLINE[pair]["depositX"] = 0
@@ -1097,6 +1098,7 @@ async def update_swapline():
                     SWAPLINE[pair]["depositY"] = p["depositY"]
                 pass    
         except Exception as e:
+            SWAPLINE = swap_back
             print(e)
     return needsUpdate
 
@@ -1177,6 +1179,7 @@ async def update_lum():
 # update tangleswap positions
 async def update_tangleswap():
     needsUpdate = False
+    tangle_back = copy.deepcopy(TANGLESWAP)
     for pair in TANGLESWAP:
         TANGLESWAP[pair]["amount"] = 0
         TANGLESWAP[pair]["depositX"] = 0
@@ -1236,14 +1239,16 @@ async def update_tangleswap():
                     TANGLESWAP[pid]["depositY"] = pos[1] * 10**-decimals1
                     
         except Exception as e:
+            TANGLESWAP = tangle_back
             print(e)
     return needsUpdate
 
 # update IOTABee positions, can handle any uniswap v3 LP
 async def update_univ3():# 
     needsUpdate = False
+    ### GET IOTABEE FARM ADDRESSES FROM: https://iotabee.com/js/app.ca61174f.js
 
-
+    iota_back = copy.deepcopy(IOTABEE)
     for tokenid in IOTABEE:
         IOTABEE[tokenid]["amount"] = 0
         IOTABEE[tokenid]["depositX"] = 0
@@ -1371,6 +1376,7 @@ async def update_univ3():#
                 IOTABEE[tokenid]["depositY"] = share * poolY * 10**-decimals1
   
         except Exception as e:
+            IOTABEE = iota_back
             print(e)
     return needsUpdate
 
