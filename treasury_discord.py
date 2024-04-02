@@ -1275,7 +1275,7 @@ async def update_univ3():#
     #                 foundAll=True
         
     #     # note all NFT IDs that got deposited into the farm / staking pool by any treasury wallet
-    #     fts = [item['total']['token_id'] for t in transfers for item in t['items'] if item['from']['hash'] in TREASURYADDRESSES]
+    #     fts = [int(item['total']['token_id']) for t in transfers for item in t['items'] if item['from']['hash'] in TREASURYADDRESSES]
     # except Exception as e:
     #     pass
 
@@ -1285,19 +1285,20 @@ async def update_univ3():#
     
     #get deposited positions in farm
     fts = []
-    fc = w3.eth.contract(abi=cabi, address=IOTABEEFARM)
-    for address in TREASURYADDRESSES:
-        i = 0
-        foundAll = False
-        while not foundAll:
-            try:
-                NFTid = await fc.functions.userNFTs(address, i).call()
-                fts.append(NFTid)
-                i+=1
-            except:
-                foundAll = True
+    for farmAddress in IOTABEEFARM:
+        fc = w3.eth.contract(abi=cabi, address=farmAddress)
+        for address in TREASURYADDRESSES:
+            i = 0
+            foundAll = False
+            while not foundAll:
+                try:
+                    NFTid = await fc.functions.userNFTs(address, i).call()
+                    fts.append(NFTid)
+                    i+=1
+                except:
+                    foundAll = True
     #####
-    for address in TREASURYADDRESSES+[IOTABEEFARM]:
+    for address in TREASURYADDRESSES+IOTABEEFARM:
         try:
             # get all currently owned position NFTs from iotabee api 
             # as well as all NFTs owned by the staking pool / farm
@@ -1305,7 +1306,7 @@ async def update_univ3():#
                 positions = await resp.json()
 
             # we only want those position NFTs in the farm that belong to treasury
-            if address==IOTABEEFARM:
+            if address in IOTABEEFARM:
                 positions = [p for p in positions if int(p['tokenid']) in fts]
 
             # for all position NFTs, pull liquidity tokens from v3 contract
