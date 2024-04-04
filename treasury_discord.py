@@ -19,7 +19,7 @@ import pandas as pd
 # region statics
 
 path = ''
-path = 'IOTA/various/evm/treasurytransparency/'
+# path = 'IOTA/various/evm/treasurytransparency/'
 # rpc provider, add an abi to cavi if needed
 w3 = Web3(AsyncHTTPProvider('https://json-rpc.evm.shimmer.network'), modules={'eth': (AsyncEth,)}, middlewares=[])
 cabi = [
@@ -1399,6 +1399,7 @@ async def on_ready():
 @bot.command()
 async def addpchannel(ctx, arg):
     if ctx.author.id in ADMINS:
+        global PCHANNELS
         try:
             PCHANNELS.append(int(arg))
             config.set('discord', 'pchannels', PCHANNELS)
@@ -1412,6 +1413,7 @@ async def addpchannel(ctx, arg):
 @bot.command()
 async def delpchannel(ctx, arg):
     if ctx.author.id in ADMINS:
+        global PCHANNELS
         try:
             PCHANNELS.remove(int(arg))
             config.set('discord', 'pchannels', PCHANNELS)
@@ -1425,6 +1427,7 @@ async def delpchannel(ctx, arg):
 @bot.command()
 async def addtchannel(ctx, arg):
     if ctx.author.id in ADMINS:
+        global TREASURYCHANNELS
         try:
             TREASURYCHANNELS.append(int(arg))
             config.set('discord', 'treasurychannels', TREASURYCHANNELS)
@@ -1438,6 +1441,7 @@ async def addtchannel(ctx, arg):
 @bot.command()
 async def deltchannel(ctx, arg):
     if ctx.author.id in ADMINS:
+        global TREASURYCHANNELS
         try:
             TREASURYCHANNELS.remove(int(arg))
             config.set('discord', 'treasurychannels', TREASURYCHANNELS)
@@ -1451,6 +1455,7 @@ async def deltchannel(ctx, arg):
 @bot.command()
 async def addadmin(ctx, arg):
     if ctx.author.id in SUPERUSER:
+        global ADMINS
         try:
             ADMINS.append(int(arg))
             config.set('discord', 'admins', ADMINS)
@@ -1464,6 +1469,7 @@ async def addadmin(ctx, arg):
 @bot.command()
 async def deladmin(ctx, arg):
     if ctx.author.id in SUPERUSER:
+        global ADMINS
         try:
             ADMINS.remove(int(arg))
             config.set('discord', 'admins', ADMINS)
@@ -1477,6 +1483,7 @@ async def deladmin(ctx, arg):
 @bot.command(brief='add ERC-20 token to watchlist `!addtoken <token address> <decimals>`')
 async def addtoken(ctx, *args):
     if ctx.author.id in ADMINS and ctx.channel.id in ADMINCHANNELS:
+        global TOKENS
         try:
             if len(args) >= 1:
                 TOKENS[args[0]]={'amount':0}
@@ -1493,6 +1500,7 @@ async def addtoken(ctx, *args):
 @bot.command()
 async def deltoken(ctx, arg):
     if ctx.author.id in ADMINS and ctx.channel.id in ADMINCHANNELS:
+        global TOKENS
         try:
             clear = [k for k,v in TOKENS.items() if k==arg or v["sym"].lower()==arg.lower()]
             for c in clear:
@@ -1509,6 +1517,7 @@ async def deltoken(ctx, arg):
 @bot.command()
 async def addv2lp(ctx, *args):
     if ctx.author.id in ADMINS and ctx.channel.id in ADMINCHANNELS:
+        global LPSV2
         try:
             if len(args) > 1:
                 LPSV2[args[0]]={'name': ' '.join(args[1:]), 'amount':0, 'tok0amount': 0,'tok1amount': 0}
@@ -1525,6 +1534,7 @@ async def addv2lp(ctx, *args):
 @bot.command()
 async def delv2lp(ctx, arg):
     if ctx.author.id in ADMINS and ctx.channel.id in ADMINCHANNELS:
+        global LPSV2
         try:
             clear = [k for k,v in LPSV2.items() if k==arg or v["name"].lower() == arg.lower()]
             for c in clear:
@@ -1542,6 +1552,7 @@ async def delv2lp(ctx, arg):
 @bot.command()
 async def addwallet(ctx, arg):
     if ctx.author.id in ADMINS and ctx.channel.id in ADMINCHANNELS:
+        global TREASURYADDRESSES
         try:
             TREASURYADDRESSES.append(arg)
             config.set('watchlist', 'treasuryaddresses', TREASURYADDRESSES)
@@ -1556,6 +1567,7 @@ async def addwallet(ctx, arg):
 @bot.command()
 async def delwallet(ctx, arg):
     if ctx.author.id in ADMINS and ctx.channel.id in ADMINCHANNELS:
+        global TREASURYADDRESSES
         try:
             TREASURYADDRESSES.remove(arg)
 
@@ -1594,6 +1606,7 @@ async def output(ctx):
 @bot.command()
 async def addlending(ctx, *args):
     if ctx.author.id in ADMINS and ctx.channel.id in ADMINCHANNELS:
+        global DEEPR
         try:
             if len(args) > 2:
                 DEEPR[args[0]]={'amount':0, 'name': ' '.join(args[2:]), 'token': args[1]}
@@ -1610,6 +1623,7 @@ async def addlending(ctx, *args):
 async def dellending(ctx, *args):
     arg = ' '.join(args)
     if ctx.author.id in ADMINS and ctx.channel.id in ADMINCHANNELS:
+        global DEEPR
         try:
             clear = [k for k,v in DEEPR.items() if k==arg or v["name"].lower()==arg.lower()]
             for c in clear:
@@ -1626,6 +1640,8 @@ async def dellending(ctx, *args):
 @bot.command()
 async def addfarm(ctx, arg):
     if ctx.author.id in ADMINS and ctx.channel.id in ADMINCHANNELS:
+        global FARMS
+        
         try:
             FARMS[arg] = {}
             config.set('watchlist', 'farms', FARMS)
