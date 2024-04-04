@@ -19,7 +19,7 @@ import pandas as pd
 # region statics
 
 path = ''
-# path = 'IOTA/various/evm/treasurytransparency/'
+path = 'IOTA/various/evm/treasurytransparency/'
 # rpc provider, add an abi to cavi if needed
 w3 = Web3(AsyncHTTPProvider('https://json-rpc.evm.shimmer.network'), modules={'eth': (AsyncEth,)}, middlewares=[])
 cabi = [
@@ -952,6 +952,7 @@ async def update_status():
 # all information about tokens in any pools are pulled from this TOKENS variable
 async def update_tokens():
     needsUpdate = False
+    global TOKENS
     for id, value in TOKENS.items():
         try:
             contract = w3.eth.contract(abi=cabi, address=id)
@@ -976,6 +977,7 @@ async def update_tokens():
 # update uniswap v2 LP positions, can handle any v2 LP
 async def update_univ2():
     needsUpdate = False
+    global LPSV2, TOKENS
     for id, pair in LPSV2.items():
         try:
             contract = w3.eth.contract(abi=cabi, address=id)
@@ -1045,6 +1047,7 @@ async def update_univ2():
 # update swapline positions through their API
 async def update_swapline():
     needsUpdate = False
+    global SWAPLINE, TOKENS
     swap_back = copy.deepcopy(SWAPLINE)
     for pair in SWAPLINE:
         SWAPLINE[pair]["amount"] = 0
@@ -1105,6 +1108,7 @@ async def update_swapline():
 # update deepr lending positions
 async def update_lending():
     needsUpdate = False
+    global DEEPR, TOKENS
     for id, value in DEEPR.items():
         try:
             # pull lending pool information from smart contract
@@ -1142,6 +1146,7 @@ async def update_lending():
 # update all farms of v2 liquidity tokens
 async def update_farms():
     needsUpdate = False
+    global FARMS, TOKENS
     for id, value in FARMS.items():
         try:
             # get amount of pools in that farm
@@ -1179,6 +1184,7 @@ async def update_lum():
 # update tangleswap positions
 async def update_tangleswap():
     needsUpdate = False
+    global TANGLESWAP, TOKENS
     tangle_back = copy.deepcopy(TANGLESWAP)
     for pair in TANGLESWAP:
         TANGLESWAP[pair]["amount"] = 0
@@ -1246,6 +1252,7 @@ async def update_tangleswap():
 # update IOTABee positions, can handle any uniswap v3 LP
 async def update_univ3():# 
     needsUpdate = False
+    global IOTABEE, TOKENS
     ### GET IOTABEE FARM ADDRESSES FROM: https://iotabee.com/js/app.ca61174f.js
 
     iota_back = copy.deepcopy(IOTABEE)
