@@ -763,8 +763,10 @@ async def update_price():
         try:
             async with session.get(iota_url, timeout=5) as resp:
                 iotarsp = await resp.json()
-                iota["sentimentUP"] = iotarsp["sentiment_votes_up_percentage"]
-                iota["sentimentDOWN"] = iotarsp["sentiment_votes_down_percentage"]
+                if iotarsp["sentiment_votes_up_percentage"]:
+                    iota["sentimentUP"] = iotarsp["sentiment_votes_up_percentage"]
+                if iotarsp["sentiment_votes_down_percentage"]:
+                    iota["sentimentDOWN"] = iotarsp["sentiment_votes_down_percentage"]
                 iota["twitter"] = iotarsp["community_data"]["twitter_followers"]
                 iota["price"] = iotarsp["market_data"]["current_price"]["usd"]
                 iota["price1h"] = iotarsp["market_data"]["price_change_percentage_1h_in_currency"]["usd"]
@@ -781,8 +783,10 @@ async def update_price():
 
             async with session.get(smr_url, timeout=5) as resp:
                 smrrsp = await resp.json()
-                smr["sentimentUP"] = smrrsp["sentiment_votes_up_percentage"]
-                smr["sentimentDOWN"] = smrrsp["sentiment_votes_down_percentage"]
+                if smrrsp["sentiment_votes_up_percentage"]:
+                    smr["sentimentUP"] = smrrsp["sentiment_votes_up_percentage"]
+                if smrrsp["sentiment_votes_down_percentage"]:
+                    smr["sentimentDOWN"] = smrrsp["sentiment_votes_down_percentage"]
                 smr["twitter"] = smrrsp["community_data"]["twitter_followers"]
                 smr["price"] = smrrsp["market_data"]["current_price"]["usd"]
                 smr["price1h"] = smrrsp["market_data"]["price_change_percentage_1h_in_currency"]["usd"]
