@@ -637,7 +637,8 @@ async def update_votings():
 
             pullSmrOuts = False
             pullSmrMilestone = 9999999999999999999
-            smrMilestone = client_smr.get_info().nodeInfo.status.confirmedMilestone.index
+            sms = client_smr.get_info().nodeInfo.status.confirmedMilestone
+            smrMilestone = sms.index
             for id in smreventids:
                 #pull basic event information from nodes participation plugin
                 async with session.get(smr_node+part_endpoint+'/'+id, timeout=10) as resp:
@@ -647,7 +648,11 @@ async def update_votings():
                     status = await resp.json()
                     EVENTS[id]['status'] = status['status']
                     EVENTS[id]['milestone'] = smrMilestone
-                    EVENTS[id]['startTimeStamp'] = client_smr.get_milestone_by_index(EVENTS[id]['milestoneIndexStart']).timestamp
+                    sstartMilestone = EVENTS[id]['milestoneIndexStart']
+                    if sstartMilestone <= smrMilestone:
+                        EVENTS[id]['startTimeStamp'] = client_smr.get_milestone_by_index(sstartMilestone).timestamp
+                    else:
+                        EVENTS[id]['startTimeStamp'] = sms.timestamp + 5*(sstartMilestone-smrMilestone)
                     #if currently an event active, pull all outputs after event starting date later on
                     if status['status']=='commencing' or status['status']=='holding':
                         pullSmrOuts = True
@@ -667,7 +672,8 @@ async def update_votings():
             # repeat the same with IOTA 
             pullIotaOuts = False
             pullIotaMilestone = 9999999999999999999
-            iotaMilestone = client_iota.get_info().nodeInfo.status.confirmedMilestone.index
+            ims = client_smr.get_info().nodeInfo.status.confirmedMilestone
+            iotaMilestone = ims.index
             #for id in [s for s in iotaeventids if s not in EVENTS]:
             for id in iotaeventids:
                 async with session.get(iota_node+part_endpoint+'/'+id, timeout=5) as resp:
@@ -676,7 +682,12 @@ async def update_votings():
                     status = await resp.json()
                     EVENTS[id]['status'] = status['status']
                     EVENTS[id]['milestone'] = iotaMilestone
-                    EVENTS[id]['startTimeStamp'] = client_iota.get_milestone_by_index(EVENTS[id]['milestoneIndexStart']).timestamp
+                    istartMilestone = EVENTS[id]['milestoneIndexStart']
+                    if istartMilestone <= iotaMilestone:
+                        EVENTS[id]['startTimeStamp'] = client_iota.get_milestone_by_index(istartMilestone).timestamp
+                    else:
+                        EVENTS[id]['startTimeStamp'] = ims.timestamp + 5*(istartMilestone-iotaMilestone)
+                    
                     if status['status']=='commencing' or status['status']=='holding':
                         pullIotaOuts = True
                         pullIotaMilestone = min(pullIotaMilestone, EVENTS[id]['milestoneIndexCommence'])
