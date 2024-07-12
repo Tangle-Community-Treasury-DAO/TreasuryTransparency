@@ -19,7 +19,7 @@ import pandas as pd
 # region statics
 
 path = ''
-# path = 'IOTA/various/evm/treasurytransparency/'
+path = 'IOTA/various/evm/treasurytransparency/'
 # rpc provider, add an abi to cavi if needed
 w3 = Web3(AsyncHTTPProvider('https://json-rpc.evm.shimmer.network'), modules={'eth': (AsyncEth,)}, middlewares=[])
 cabi = [
@@ -672,7 +672,7 @@ async def update_votings():
             # repeat the same with IOTA 
             pullIotaOuts = False
             pullIotaMilestone = 9999999999999999999
-            ims = client_smr.get_info().nodeInfo.status.confirmedMilestone
+            ims = client_iota.get_info().nodeInfo.status.confirmedMilestone
             iotaMilestone = ims.index
             #for id in [s for s in iotaeventids if s not in EVENTS]:
             for id in iotaeventids:
@@ -1408,6 +1408,7 @@ async def update_univ3():#
 
 @bot.event
 async def on_ready():
+    
     print(f'{bot.user} has connected to Discord!')
 
 # adds a channel-id by an admin where users can query p
